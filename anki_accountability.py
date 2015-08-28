@@ -1,8 +1,12 @@
 # Copyright: Ben Guise
-# License: GNU GPL v2
+# License: GNU GPL v3
 # Development funded by the East Asian Languages and Literatures Department 
 # at the University of Pittsburgh.
 
+# Some code and conventions borrowed from the Anki Progress Graph add on
+
+# Anki Accountability
+###################################################################
 
 # import the main window object (mw) from ankiqt
 from aqt import mw
@@ -11,11 +15,13 @@ from aqt.utils import showInfo
 
 from aqt.utils import getText
 
+from anki import stats
+from anki.hooks import wrap
+import time, re, sys
+
 # import all of the Qt GUI library
 from aqt.qt import *
 
-# We're going to add a menu item below. First we want to create a function to 
-# be called when the menu item is activated
 
 recipientEmail = None
 userEmail = None
@@ -24,7 +30,16 @@ def requestInfo():
 	# show a message box and get some info from the user
 	#showInfo("Email Progress\n")
 	recipientEmail = getText("Please enter recipient's email address:")
-	requestUserEmail(recipientEmail)
+
+	#requestUserEmail(recipientEmail)
+
+	# TODO: Change this to create a Qt window that takes in
+	#		all information at one time
+	mw.myWidget = widget = QDialog()
+	widget.setWindowTitle("Anki Accountability")
+	widget.show()
+
+
 
 def requestUserEmail(recEmail):
 	userEmail = getText("Please enter your email address:")
