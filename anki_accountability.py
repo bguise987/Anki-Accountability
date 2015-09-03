@@ -29,14 +29,36 @@ userEmail = None
 def requestInfo():
 	# show a message box and get some info from the user
 	#showInfo("Email Progress\n")
-	recipientEmail = getText("Please enter recipient's email address:")
+	#recipientEmail = getText("Please enter recipient's email address:")
 
 	#requestUserEmail(recipientEmail)
 
 	# TODO: Change this to create a Qt window that takes in
 	#		all information at one time
-	mw.myWidget = widget = QDialog()
+	#mw.myWidget = widget = QDialog()
+
+	# Setup and show the window
+	mw.myWidget = widget = QWidget()
 	widget.setWindowTitle("Anki Accountability")
+	widget.setGeometry(100,100,500,200)
+
+	# Labels
+	nameLabel = QLabel("<b>Your name: </b>")
+	nameLabel.setTextFormat(1)
+	emailLabel = QLabel("<b>Your email address: </b>")
+
+	# Text boxes for accepting input
+	nameText = QTextEdit()
+	emailText = QTextEdit()
+
+	# Layout
+	layout = QVBoxLayout(widget)
+	layout.addWidget(nameLabel)
+	layout.addWidget(nameText)
+	layout.addWidget(emailLabel)
+	layout.addWidget(emailText)
+
+	# Show the window
 	widget.show()
 
 
