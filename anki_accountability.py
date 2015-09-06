@@ -28,19 +28,11 @@ userEmail = None
 
 def requestInfo():
 	# show a message box and get some info from the user
-	#showInfo("Email Progress\n")
-	#recipientEmail = getText("Please enter recipient's email address:")
-
-	#requestUserEmail(recipientEmail)
-
-	# TODO: Change this to create a Qt window that takes in
-	#		all information at one time
-	#mw.myWidget = widget = QDialog()
 
 	# Setup and show the window
 	mw.myWidget = widget = QWidget()
 	widget.setWindowTitle("Anki Accountability")
-	widget.setGeometry(100,100,500,200)
+	widget.setGeometry(100,100,500,100)
 
 	# Labels
 	nameLabel = QLabel("<b>Your name: </b>")
@@ -55,25 +47,15 @@ def requestInfo():
 	confirmButton = QPushButton("Ok")
 
 	# Layout
-	layout = QVBoxLayout(widget)
-	layout.addWidget(nameLabel)
-	layout.addWidget(nameText)
-	layout.addWidget(emailLabel)
-	layout.addWidget(emailText)
-	layout.addWidget(confirmButton)
+	layout = QGridLayout(widget)
+	layout.addWidget(nameLabel, 0, 0)
+	layout.addWidget(nameText, 0, 1)
+	layout.addWidget(emailLabel, 1, 0)
+	layout.addWidget(emailText, 1, 1)
+	layout.addWidget(confirmButton, 2, 1)
 
 	# Show the window
 	widget.show()
-
-
-
-def requestUserEmail(recEmail):
-	userEmail = getText("Please enter your email address:")
-	requestUserName(recEmail, userEmail)
-
-def requestUserName(recEmail, userEmail):
-	userName = getText("Please enter your name:")
-	displayPreview(recEmail, userEmail, userName)
 
 def displayPreview(recEmail, userEmail, userName):
 	# get the number of cards in the current collection, which is stored in
