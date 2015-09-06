@@ -51,12 +51,16 @@ def requestInfo():
 	nameText = QTextEdit()
 	emailText = QTextEdit()
 
+	# Button to enter data
+	confirmButton = QPushButton("Ok")
+
 	# Layout
 	layout = QVBoxLayout(widget)
 	layout.addWidget(nameLabel)
 	layout.addWidget(nameText)
 	layout.addWidget(emailLabel)
 	layout.addWidget(emailText)
+	layout.addWidget(confirmButton)
 
 	# Show the window
 	widget.show()
