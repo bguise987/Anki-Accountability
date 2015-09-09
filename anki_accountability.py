@@ -32,7 +32,7 @@ def requestInfo():
 	# Setup and show the window
 	mw.myWidget = widget = QWidget()
 	widget.setWindowTitle("Anki Accountability")
-	widget.setGeometry(100,100,500,100)
+	widget.setGeometry(350, 200, 500, 75)
 
 	# Labels
 	nameLabel = QLabel("<b>Your name: </b>")
@@ -41,10 +41,14 @@ def requestInfo():
 
 	# Text boxes for accepting input
 	nameText = QTextEdit()
+	nameText.setFixedSize(300, 25)
 	emailText = QTextEdit()
+	emailText.setFixedSize(300, 25)
 
 	# Button to enter data
 	confirmButton = QPushButton("Ok")
+	confirmButton.clicked.connect(lambda: storeUserInfo(confirmButton))
+	confirmButton.setFixedWidth(80)
 
 	# Layout
 	layout = QGridLayout(widget)
@@ -56,6 +60,9 @@ def requestInfo():
 
 	# Show the window
 	widget.show()
+
+def storeUserInfo(button):
+	showInfo("Button clicked!")
 
 def displayPreview(recEmail, userEmail, userName):
 	# get the number of cards in the current collection, which is stored in
