@@ -47,7 +47,7 @@ def requestInfo():
 
 	# Button to enter data
 	confirmButton = QPushButton("Ok")
-	confirmButton.clicked.connect(lambda: storeUserInfo(confirmButton))
+	confirmButton.clicked.connect(lambda: storeUserInfo(confirmButton, nameText, emailText))
 	confirmButton.setFixedWidth(80)
 
 	# Layout
@@ -61,8 +61,27 @@ def requestInfo():
 	# Show the window
 	widget.show()
 
-def storeUserInfo(button):
-	showInfo("Button clicked!")
+def storeUserInfo(button, nameField, emailField):
+	storedName = nameField.toPlainText()
+	storedEmail = emailField.toPlainText()
+	userInfo = storedName + storedEmail
+	showInfo("Button clicked!, stored %s" % (userInfo))
+
+	# TODO: Store user info in the DB (use mw.col.conf)
+	# TODO: Move this try catch to the main body of this script so it runs at startup
+
+	try:
+		stats.CollectionStats.todayStats = wrap(stats.CollectionStats.todayStats, myTodayStats, "around")
+	except AttributeError:
+		showInfo("Error running Anki Accountability. Please check your Anki version.")
+		pass
+
+def myTodayStats(self, _old):
+    txt = _old(self)
+    # TODO: Extract user info from DB (use mw.col.conf)
+    txt += "<b>User info goes here</b>"
+    return txt
+	
 
 def displayPreview(recEmail, userEmail, userName):
 	# get the number of cards in the current collection, which is stored in
