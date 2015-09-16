@@ -23,11 +23,8 @@ import time, re, sys
 from aqt.qt import *
 
 
-recipientEmail = None
-userEmail = None
-
 def requestInfo():
-	# show a message box and get some info from the user
+	# Show a message box and get some info from the user
 
 	# Setup and show the window
 	mw.myWidget = widget = QWidget()
@@ -71,8 +68,21 @@ def storeUserInfo(button, nameField, emailField):
 	userInfo = storedName + storedEmail
 	showInfo("Button clicked!, stored %s" % (userInfo))
 
+	# TODO: Use some Regex's to split up the user's name into first and last name
+	# TODO: Use some Regex's to split up the user's email into username and domain name
+
 	# TODO: Store user info in the DB (use mw.col.conf)
-	# TODO: Move this try catch to the main body of this script so it runs at startup
+	mw.col.db.execute("create table if not exists AnkiAccountabilityUser(id integer, first_name varchar(100), last_name varchar(100) email_name varchar(100), email_domain varchar(100))")
+	mw.col.db.execute("insert into AnkiAccountabilityUser values(%s, %s)" % (storedName, storedEmail))
+
+	# Show that these values were really stored
+	showInfo("Now going to query database")
+	name in mw.col.db.execute("select name from AnkiAccountabilityUser")
+	showInfo("This is the name that was stored: %s" % (name))
+	email in mw.col.db.execute("select email from AnkiAccountabilityUser")
+	showInfo("This is the email that was stored: %s" % (email))
+
+
 
 	try:
 		stats.CollectionStats.todayStats = wrap(stats.CollectionStats.todayStats, myTodayStats, "around")
@@ -94,6 +104,7 @@ def displayPreview(recEmail, userEmail, userName):
 	deckId = mw.col.decks.selected()
 	deckName = mw.col.decks.name(deckId)
 	showInfo("Deck name: %s\n%d cards in deck\nRecipient email: %s\nYour email: %s\nYour name: %s" % (deckName, cardCount, recEmail[0], userEmail[0], userName[0]))
+
 
 # create a new menu item, "Email Results"
 action = QAction("Email Results", mw)
