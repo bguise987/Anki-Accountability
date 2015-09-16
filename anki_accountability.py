@@ -40,9 +40,9 @@ def requestInfo():
 	emailLabel = QLabel("<b>Your email address: </b>")
 
 	# Text boxes for accepting input
-	nameText = QTextEdit()
+	nameText = QLineEdit()
 	nameText.setFixedSize(300, 25)
-	emailText = QTextEdit()
+	emailText = QLineEdit()
 	emailText.setFixedSize(300, 25)
 
 	# Button to enter data
@@ -58,12 +58,16 @@ def requestInfo():
 	layout.addWidget(emailText, 1, 1)
 	layout.addWidget(confirmButton, 2, 1)
 
+	# Set tab order for quick data entry
+	widget.setTabOrder(nameText, emailText)
+	widget.setTabOrder(emailText, confirmButton)
+
 	# Show the window
 	widget.show()
 
 def storeUserInfo(button, nameField, emailField):
-	storedName = nameField.toPlainText()
-	storedEmail = emailField.toPlainText()
+	storedName = nameField.text()
+	storedEmail = emailField.text()
 	userInfo = storedName + storedEmail
 	showInfo("Button clicked!, stored %s" % (userInfo))
 
