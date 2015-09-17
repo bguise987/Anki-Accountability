@@ -66,18 +66,20 @@ def storeUserInfo(button, nameField, emailField):
 	showInfo("Button clicked!, took in %s" % (nameField.text()))
 
 	# TODO: Use some Regex's to split up the user's name into first and last name
-	enteredName = nameField.text().split(' ')
-	firstName = enteredName[0]
-	lastName = enteredName[1]
+	enteredName = nameField.text()
+	#enteredName = nameField.text().split(' ')
+	#firstName = enteredName[0]
+	#lastName = enteredName[1]
 	# TODO: Use some Regex's to split up the user's email into username and domain name
-	enteredEmail = emailField.text().split('@')
-	emailAddr = enteredEmail[0]
-	emailDomain = enteredEmail[1]
+	enteredEmail = emailField.text()
+	#enteredEmail = emailField.text().split('@')
+	#emailAddr = enteredEmail[0]
+	#emailDomain = enteredEmail[1]
 
 	# TODO: Store user info in the DB (use mw.col.conf)
-	mw.col.db.execute("CREATE TABLE IF NOT EXISTS AnkiAccountabilityUser (id INTEGER PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, email_name TEXT NOT NULL, email_domain TEXT NOT NULL)")
-	params = (firstName, lastName, emailAddr, emailDomain)
-	mw.col.db.execute("INSERT INTO AnkiAccountabilityUser VALUES (NULL, ?, ?, ?, ?)", params)
+	mw.col.db.execute("CREATE TABLE IF NOT EXISTS AnkiAccountabilityUser (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL)")
+	params = (enteredName, enteredEmail)
+	mw.col.db.execute("INSERT INTO AnkiAccountabilityUser VALUES (NULL, ?, ?)", params)
 
 	# Show that these values were really stored
 	showInfo("Now going to query database")
