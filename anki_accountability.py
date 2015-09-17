@@ -63,23 +63,27 @@ def requestInfo():
 	widget.show()
 
 def storeUserInfo(button, nameField, emailField):
-	storedName = nameField.text()
-	storedEmail = emailField.text()
-	userInfo = storedName + storedEmail
-	showInfo("Button clicked!, stored %s" % (userInfo))
+	showInfo("Button clicked!, took in %s" % (nameField.text()))
 
 	# TODO: Use some Regex's to split up the user's name into first and last name
+	enteredName = nameField.text().split(' ')
+	firstName = enteredName[0]
+	lastName = enteredName[1]
 	# TODO: Use some Regex's to split up the user's email into username and domain name
+	enteredEmail = emailField.text().split('@')
+	emailAddr = enteredEmail[0]
+	emailDomain = enteredEmail[1]
 
 	# TODO: Store user info in the DB (use mw.col.conf)
-	mw.col.db.execute("create table if not exists AnkiAccountabilityUser(id integer, first_name varchar(100), last_name varchar(100) email_name varchar(100), email_domain varchar(100))")
-	mw.col.db.execute("insert into AnkiAccountabilityUser values(%s, %s)" % (storedName, storedEmail))
+	mw.col.db.execute("CREATE TABLE IF NOT EXISTS AnkiAccountabilityUser (id INTEGER PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, email_name TEXT NOT NULL, email_domain TEXT NOT NULL)")
+	params = (firstName, lastName, emailAddr, emailDomain)
+	mw.col.db.execute("INSERT INTO AnkiAccountabilityUser VALUES (NULL, ?, ?, ?, ?)", params)
 
 	# Show that these values were really stored
 	showInfo("Now going to query database")
-	name in mw.col.db.execute("select name from AnkiAccountabilityUser")
+	name in mw.col.db.execute("select first_name from AnkiAccountabilityUser")
 	showInfo("This is the name that was stored: %s" % (name))
-	email in mw.col.db.execute("select email from AnkiAccountabilityUser")
+	email in mw.col.db.execute("select email_name from AnkiAccountabilityUser")
 	showInfo("This is the email that was stored: %s" % (email))
 
 
