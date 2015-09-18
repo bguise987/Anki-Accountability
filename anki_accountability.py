@@ -66,26 +66,42 @@ def storeUserInfo(button, nameField, emailField):
 	showInfo("Button clicked!, took in %s" % (nameField.text()))
 
 	# TODO: Use some Regex's to split up the user's name into first and last name
-	enteredName = nameField.text()
-	#enteredName = nameField.text().split(' ')
-	#firstName = enteredName[0]
-	#lastName = enteredName[1]
+	#enteredName = nameField.text()
+	enteredName = nameField.text().split(' ')
+	firstName = enteredName[0]
+	lastName = enteredName[1]
 	# TODO: Use some Regex's to split up the user's email into username and domain name
 	enteredEmail = emailField.text()
 	#enteredEmail = emailField.text().split('@')
 	#emailAddr = enteredEmail[0]
 	#emailDomain = enteredEmail[1]
 
-	# TODO: Store user info in the DB (use mw.col.conf)
-	mw.col.db.execute("CREATE TABLE IF NOT EXISTS AnkiAccountabilityUser (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL)")
-	params = (enteredName, enteredEmail)
-	mw.col.db.execute("INSERT INTO AnkiAccountabilityUser VALUES (NULL, ?, ?)", params)
+	# TODO: Store user info in the DB
+	showInfo("Now about to create the DB")
+	mw.col.db.execute("CREATE TABLE IF NOT EXISTS AnkiAccountabilityUser (id INTEGER PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, email TEXT NOT NULL)")
+
+	#params = (firstName, lastName, enteredEmail)
+	showInfo("Now creating the query string")
+
+	#firstName = "\"" + firstName + "\""
+	#lastName = "\"" + lastName + "\""
+	#enteredEmail = "\"" + enteredEmail + "\""
+
+	#query_str = "INSERT INTO AnkiAccountabilityUser VALUES (%s, %s, %s)" % (firstName, lastName, enteredEmail)
+
+	#showInfo("About to execute: " + query_str)
+
+	#mw.col.db.execute(query_str)
+	mw.col.db.execute("INSERT INTO AnkiAccountabilityUser VALUES(?, ?, ?)", firstName, lastName, enteredEmail)
 
 	# Show that these values were really stored
 	showInfo("Now going to query database")
-	name in mw.col.db.execute("select first_name from AnkiAccountabilityUser")
-	showInfo("This is the name that was stored: %s" % (name))
-	email in mw.col.db.execute("select email_name from AnkiAccountabilityUser")
+	name = mw.col.db.scalar("SELECT first_name FROM AnkiAccountabilityUser WHERE last_name IS \"Guise\"")
+	if name is None:
+		showInfo("This is the name that was stored: %s" % (name))
+	else:
+		showInfo("ERROR: No result found in database")
+	email in mw.col.db.execute("SELECT email_name FROM AnkiAccountabilityUser WHERE last_name IS \"Guise\"")
 	showInfo("This is the email that was stored: %s" % (email))
 
 
