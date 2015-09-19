@@ -13,6 +13,8 @@ from aqt import mw
 # import the "show info" tool from utils.py
 from aqt.utils import showInfo
 
+#from anki.utils import json
+
 from aqt.utils import getText
 
 from anki import stats
@@ -77,11 +79,11 @@ def storeUserInfo(button, nameField, emailField):
 	#emailDomain = enteredEmail[1]
 
 	# TODO: Store user info in the DB
-	showInfo("Now about to create the DB")
-	mw.col.db.execute("CREATE TABLE IF NOT EXISTS AnkiAccountabilityUser (id INTEGER PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, email TEXT NOT NULL)")
+	#showInfo("Now about to create the DB")
+	#mw.col.db.execute("CREATE TABLE IF NOT EXISTS AnkiAccountabilityUser (id INTEGER PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, email TEXT NOT NULL)")
 
 	#params = (firstName, lastName, enteredEmail)
-	showInfo("Now creating the query string")
+	#showInfo("Now creating the query string")
 
 	#firstName = "\"" + firstName + "\""
 	#lastName = "\"" + lastName + "\""
@@ -91,18 +93,48 @@ def storeUserInfo(button, nameField, emailField):
 
 	#showInfo("About to execute: " + query_str)
 
+	# Store information to mw.col.conf, as per add on writing guide
+
+	showInfo("Now attempting to store to mw.col.conf")
+	conf = mw.col.conf
+
+	# Check to see if the user has a profile already
+
+	showInfo("Check to see if user has a profile already")
+
+	try:
+		checkFirstTime = conf['exist_prof_anki_actbil']
+	except KeyError:
+		conf['exist_prof_anki_actbil'] = False
+
+
+	if conf['exist_prof_anki_actbil'] == True:
+		showInfo("User has already saved!")
+	else:
+		showInfo("No User profile found, let's create one!")
+
+	conf['exist_prof_anki_actbil'] = True
+
+	conf['first_name_anki_actbil'] = firstName
+	conf['last_name_anki_actbil'] = lastName
+	conf['email_addr_anki_actbil'] = enteredEmail
+	storedConfName = conf['first_name_anki_actbil']
+	showInfo("Stored this to conf: %s" % (storedConfName))
+	
+
+
 	#mw.col.db.execute(query_str)
-	mw.col.db.execute("INSERT INTO AnkiAccountabilityUser VALUES(?, ?, ?)", firstName, lastName, enteredEmail)
+	#mw.col.db.execute("INSERT INTO AnkiAccountabilityUser VALUES(?, ?, ?)", firstName, lastName, enteredEmail)
 
 	# Show that these values were really stored
-	showInfo("Now going to query database")
-	name = mw.col.db.scalar("SELECT first_name FROM AnkiAccountabilityUser WHERE last_name IS \"Guise\"")
-	if name is None:
-		showInfo("This is the name that was stored: %s" % (name))
-	else:
-		showInfo("ERROR: No result found in database")
-	email in mw.col.db.execute("SELECT email_name FROM AnkiAccountabilityUser WHERE last_name IS \"Guise\"")
-	showInfo("This is the email that was stored: %s" % (email))
+	#showInfo("Now going to query database")
+	#name = mw.col.db.scalar("SELECT * FROM AnkiAccountabilityUser WHERE last_name IS \"Guise\"")
+	#if name is None:
+	#	showInfo("This is the name that was stored: %s" % (name))
+	#else:
+	#	showInfo("ERROR: No result found in database")
+	#email in mw.col.db.execute("SELECT * FROM AnkiAccountabilityUser WHERE last_name IS \"Guise\"")
+	#showInfo("This is the email that was stored: %s" % (email))
 
 
 
