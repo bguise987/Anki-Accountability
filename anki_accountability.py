@@ -96,31 +96,30 @@ def storeUserInfo(button, nameField, emailField):
 	# Store information to mw.col.conf, as per add on writing guide
 
 	showInfo("Now attempting to store to mw.col.conf")
-	conf = mw.col.conf
+	#conf = mw.col.conf
 
 	# Check to see if the user has a profile already
 
 	showInfo("Check to see if user has a profile already")
 
 	try:
-		checkFirstTime = conf['exist_prof_anki_actbil']
+		checkFirstTime = mw.col.conf['exist_prof_anki_actbil']
 	except KeyError:
-		conf['exist_prof_anki_actbil'] = False
+		mw.col.conf['exist_prof_anki_actbil'] = False
 
 
-	if conf['exist_prof_anki_actbil'] == True:
+	if mw.col.conf['exist_prof_anki_actbil'] == True:
 		showInfo("User has already saved!")
 	else:
 		showInfo("No User profile found, let's create one!")
 
-	conf['exist_prof_anki_actbil'] = True
+	mw.col.conf['exist_prof_anki_actbil'] = True
 
-	conf['first_name_anki_actbil'] = firstName
-	conf['last_name_anki_actbil'] = lastName
-	conf['email_addr_anki_actbil'] = enteredEmail
-	storedConfName = conf['first_name_anki_actbil']
+	mw.col.conf['first_name_anki_actbil'] = firstName
+	mw.col.conf['last_name_anki_actbil'] = lastName
+	mw.col.conf['email_addr_anki_actbil'] = enteredEmail
+	storedConfName = mw.col.conf['first_name_anki_actbil']
 	showInfo("Stored this to conf: %s" % (storedConfName))
-	
 
 
 	#mw.col.db.execute(query_str)
