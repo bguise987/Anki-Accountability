@@ -46,7 +46,7 @@ def requestInfo():
 
 	# Button to enter data
 	confirmButton = QPushButton("Ok")
-	confirmButton.clicked.connect(lambda: storeUserInfo(confirmButton, nameText, emailText))
+	confirmButton.clicked.connect(lambda: storeUserInfo(confirmButton, nameText, emailText, widget))
 	confirmButton.setFixedWidth(80)
 
 	# Layout
@@ -61,10 +61,23 @@ def requestInfo():
 	widget.setTabOrder(nameText, emailText)
 	widget.setTabOrder(emailText, confirmButton)
 
+	# If the user has given us information before, let's try and access it now
+	try:
+		checkFirstTime = mw.col.conf['exist_prof_anki_actbil']
+	except KeyError:
+		mw.col.conf['exist_prof_anki_actbil'] = False
+
+	if checkFirstTime == True:
+		userName = mw.col.conf['first_name_anki_actbil'] + " " + mw.col.conf['last_name_anki_actbil']
+		nameText.setText(userName)
+		userEmail = mw.col.conf['email_addr_anki_actbil']
+		emailText.setText(userEmail)
+
+
 	# Show the window
 	widget.show()
 
-def storeUserInfo(button, nameField, emailField):
+def storeUserInfo(button, nameField, emailField, dialogBox):
 	showInfo("Button clicked!, took in %s" % (nameField.text()))
 
 	# TODO: Use some Regex's to split up the user's name into first and last name
@@ -110,6 +123,7 @@ def storeUserInfo(button, nameField, emailField):
 
 	if mw.col.conf['exist_prof_anki_actbil'] == True:
 		showInfo("User has already saved!")
+		showInfo("Previously saved name: %s %s" % (mw.col.conf['first_name_anki_actbil'], mw.col.conf['last_name_anki_actbil']))
 	else:
 		showInfo("No User profile found, let's create one!")
 
@@ -142,6 +156,9 @@ def storeUserInfo(button, nameField, emailField):
 	except AttributeError:
 		showInfo("Error running Anki Accountability. Please check your Anki version.")
 		pass
+
+	dialogBox.hide()
+
 
 def myTodayStats(self, _old):
     txt = _old(self)
