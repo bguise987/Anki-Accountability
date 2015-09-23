@@ -62,6 +62,7 @@ def requestInfo():
 	widget.setTabOrder(emailText, confirmButton)
 
 	# If the user has given us information before, let's try and access it now
+	checkFirstTime = None
 	try:
 		checkFirstTime = mw.col.conf['exist_prof_anki_actbil']
 	except KeyError:
@@ -78,8 +79,6 @@ def requestInfo():
 	widget.show()
 
 def storeUserInfo(button, nameField, emailField, dialogBox):
-	showInfo("Button clicked!, took in %s" % (nameField.text()))
-
 	# Use some Regex's to split up the user's name into first and last name
 	enteredName = nameField.text().split(' ')
 	firstName = enteredName[0]
@@ -87,33 +86,22 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 	# Get the user's email address
 	enteredEmail = emailField.text()
 
-	# Store information to mw.col.conf, as per add on writing guide
-
-	showInfo("Now attempting to store to mw.col.conf")
+	
 
 	# Check to see if the user has a profile already
-
-	showInfo("Check to see if user has a profile already")
-
 	try:
 		checkFirstTime = mw.col.conf['exist_prof_anki_actbil']
 	except KeyError:
 		mw.col.conf['exist_prof_anki_actbil'] = False
 
-
-	if mw.col.conf['exist_prof_anki_actbil'] == True:
-		showInfo("User has already saved!")
-		showInfo("Previously saved name: %s %s" % (mw.col.conf['first_name_anki_actbil'], mw.col.conf['last_name_anki_actbil']))
-	else:
-		showInfo("No User profile found, let's create one!")
-
+	# Store information to mw.col.conf, as per add on writing guide
+	# Note: We don't check to see if a previous profile exists. This allows the user to 
+	# change his/her email address or name if a previous error was made.
 	mw.col.conf['exist_prof_anki_actbil'] = True
 
 	mw.col.conf['first_name_anki_actbil'] = firstName
 	mw.col.conf['last_name_anki_actbil'] = lastName
 	mw.col.conf['email_addr_anki_actbil'] = enteredEmail
-	storedConfName = mw.col.conf['first_name_anki_actbil']
-	showInfo("Stored this to conf: %s" % (storedConfName))
 
 	dialogBox.hide()
 
@@ -121,20 +109,25 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 def myTodayStats(self, _old):
     txt = _old(self)
 
-    # Extract user info from use mw.col.conf
-    userName = mw.col.conf['first_name_anki_actbil'] + " " + mw.col.conf['last_name_anki_actbil']
-    userEmail = mw.col.conf['email_addr_anki_actbil']
+    try:
+    	# Extract user info from use mw.col.conf
+    	userName = mw.col.conf['first_name_anki_actbil'] + " " + mw.col.conf['last_name_anki_actbil']
+    	userEmail = mw.col.conf['email_addr_anki_actbil']
 
-    # Grab data on user's progress
-    cardsRight = 0
-    cardsWrong = 0
+    	# Grab data on user's progress
+    	cardsRight = 0
+    	cardsWrong = 0
 
-    txt += self._title(
-        _("Anki Accountability"),
-        _(userName + ", " + userEmail))
+    	txt += self._title(
+	        _("Anki Accountability"),
+    	    _(userName + ", " + userEmail))
 
-    txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
-    txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
+    	txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
+    	txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
+    except KeyError:
+    	showInfo("ERROR: Anki Accountability cannot find your user profile!<br><br>Please run this add-on to supply your name by going to Tools->Email Results and filling out the required information.")
+    	pass
+
 
     return txt
 	
