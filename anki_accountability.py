@@ -123,11 +123,13 @@ def myTodayStats(self, _old):
 	        _("Anki Accountability"),
     	    _("<font size='5'>" + userName + ", " + userEmail + "</font>"))
 
+    	# Get some information about the deck
     	deckId = mw.col.decks.selected()
     	deckName = mw.col.decks.name(deckId)
+    	cardCount = mw.col.cardCount()
 
     	txt += "<div><b>" + deckName + "</b></div>"
-
+    	txt += "<div><b>Total cards: </b>" + str(cardCount) + "</div>"
     	txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
     	txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
     except KeyError:
