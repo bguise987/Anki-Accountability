@@ -80,36 +80,16 @@ def requestInfo():
 def storeUserInfo(button, nameField, emailField, dialogBox):
 	showInfo("Button clicked!, took in %s" % (nameField.text()))
 
-	# TODO: Use some Regex's to split up the user's name into first and last name
-	#enteredName = nameField.text()
+	# Use some Regex's to split up the user's name into first and last name
 	enteredName = nameField.text().split(' ')
 	firstName = enteredName[0]
 	lastName = enteredName[1]
-	# TODO: Use some Regex's to split up the user's email into username and domain name
+	# Get the user's email address
 	enteredEmail = emailField.text()
-	#enteredEmail = emailField.text().split('@')
-	#emailAddr = enteredEmail[0]
-	#emailDomain = enteredEmail[1]
-
-	# TODO: Store user info in the DB
-	#showInfo("Now about to create the DB")
-	#mw.col.db.execute("CREATE TABLE IF NOT EXISTS AnkiAccountabilityUser (id INTEGER PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, email TEXT NOT NULL)")
-
-	#params = (firstName, lastName, enteredEmail)
-	#showInfo("Now creating the query string")
-
-	#firstName = "\"" + firstName + "\""
-	#lastName = "\"" + lastName + "\""
-	#enteredEmail = "\"" + enteredEmail + "\""
-
-	#query_str = "INSERT INTO AnkiAccountabilityUser VALUES (%s, %s, %s)" % (firstName, lastName, enteredEmail)
-
-	#showInfo("About to execute: " + query_str)
 
 	# Store information to mw.col.conf, as per add on writing guide
 
 	showInfo("Now attempting to store to mw.col.conf")
-	#conf = mw.col.conf
 
 	# Check to see if the user has a profile already
 
@@ -135,35 +115,27 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 	storedConfName = mw.col.conf['first_name_anki_actbil']
 	showInfo("Stored this to conf: %s" % (storedConfName))
 
-
-	#mw.col.db.execute(query_str)
-	#mw.col.db.execute("INSERT INTO AnkiAccountabilityUser VALUES(?, ?, ?)", firstName, lastName, enteredEmail)
-
-	# Show that these values were really stored
-	#showInfo("Now going to query database")
-	#name = mw.col.db.scalar("SELECT * FROM AnkiAccountabilityUser WHERE last_name IS \"Guise\"")
-	#if name is None:
-	#	showInfo("This is the name that was stored: %s" % (name))
-	#else:
-	#	showInfo("ERROR: No result found in database")
-	#email in mw.col.db.execute("SELECT * FROM AnkiAccountabilityUser WHERE last_name IS \"Guise\"")
-	#showInfo("This is the email that was stored: %s" % (email))
-
-
-
-	try:
-		stats.CollectionStats.todayStats = wrap(stats.CollectionStats.todayStats, myTodayStats, "around")
-	except AttributeError:
-		showInfo("Error running Anki Accountability. Please check your Anki version.")
-		pass
-
 	dialogBox.hide()
 
 
 def myTodayStats(self, _old):
     txt = _old(self)
-    # TODO: Extract user info from DB (use mw.col.conf)
-    txt += "<b>User info goes here</b>"
+
+    # Extract user info from use mw.col.conf
+    userName = mw.col.conf['first_name_anki_actbil'] + " " + mw.col.conf['last_name_anki_actbil']
+    userEmail = mw.col.conf['email_addr_anki_actbil']
+
+    # Grab data on user's progress
+    cardsRight = 0
+    cardsWrong = 0
+
+    txt += self._title(
+        _("Anki Accountability"),
+        _(userName + ", " + userEmail))
+
+    txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
+    txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
+
     return txt
 	
 
@@ -183,3 +155,10 @@ action = QAction("Email Results", mw)
 mw.connect(action, SIGNAL("triggered()"), requestInfo)
 # and add it to the tools menu
 mw.form.menuTools.addAction(action)
+
+# Ensure our data is added to the Anki stats image
+try:
+	stats.CollectionStats.todayStats = wrap(stats.CollectionStats.todayStats, myTodayStats, "around")
+except AttributeError:
+	showInfo("Error running Anki Accountability. Please check your Anki version.")
+	pass
