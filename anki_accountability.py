@@ -13,8 +13,6 @@ from aqt import mw
 # import the "show info" tool from utils.py
 from aqt.utils import showInfo
 
-#from anki.utils import json
-
 from aqt.utils import getText
 
 from anki import stats
@@ -102,6 +100,9 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 	mw.col.conf['first_name_anki_actbil'] = firstName
 	mw.col.conf['last_name_anki_actbil'] = lastName
 	mw.col.conf['email_addr_anki_actbil'] = enteredEmail
+
+	# Let the collection know that we made a conf change
+	mw.col.setMod()
 
 	dialogBox.hide()
 
