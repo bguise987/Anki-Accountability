@@ -1,6 +1,6 @@
 # Copyright: Ben Guise
 # License: GNU GPL v3
-# Development funded by the East Asian Languages and Literatures Department 
+# Development funded by the East Asian Languages and Literatures Department
 # at the University of Pittsburgh.
 
 # Some code and conventions borrowed from the Anki Progress Graph add on
@@ -84,7 +84,7 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 	# Get the user's email address
 	enteredEmail = emailField.text()
 
-	
+
 
 	# Check to see if the user has a profile already
 	try:
@@ -93,7 +93,7 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 		mw.col.conf['exist_prof_anki_actbil'] = False
 
 	# Store information to mw.col.conf, as per add on writing guide
-	# Note: We don't check to see if a previous profile exists. This allows the user to 
+	# Note: We don't check to see if a previous profile exists. This allows the user to
 	# change his/her email address or name if a previous error was made.
 	mw.col.conf['exist_prof_anki_actbil'] = True
 
@@ -128,7 +128,7 @@ def myTodayStats(self, _old):
     	deckName = mw.col.decks.name(deckId)
     	cardCount = mw.col.cardCount()
 
-    	txt += "<div><b>" + deckName + "</b></div>"
+    	txt += "<div><b>Deck name: " + deckName + "</b></div>"
     	txt += "<div><b>Total cards: </b>" + str(cardCount) + "</div>"
     	txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
     	txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
@@ -138,7 +138,7 @@ def myTodayStats(self, _old):
 
 
     return txt
-	
+
 
 def displayPreview(recEmail, userEmail, userName):
 	# get the number of cards in the current collection, which is stored in
