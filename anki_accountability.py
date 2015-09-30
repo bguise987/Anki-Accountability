@@ -116,6 +116,14 @@ def myTodayStats(self, _old):
     	userEmail = mw.col.conf['email_addr_anki_actbil']
 
     	# Grab data on user's progress
+        # Some of this code is taken from stats.py within anki
+
+        # Run code to grab the eases data from stats
+        #deckStats = mw.col.stats()
+        # Due to 'private' methods here, run easeGraph()
+        # and extract data we'd like from it's returned text
+        #results = deckStats.easeGraph()
+
     	cardsRight = 0
     	cardsWrong = 0
 
