@@ -128,7 +128,7 @@ def myTodayStats(self, _old):
     	deckName = mw.col.decks.name(deckId)
         cardCount = mw.col.db.scalar("select count() from cards where did is %s" % deckId)
 
-    	txt += "<div><b>" + deckName + "</b></div>"
+    	txt += "<div><b>Deck name: " + deckName + "</b></div>"
     	txt += "<div><b>Total cards: </b>" + str(cardCount) + "</div>"
     	txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
     	txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
