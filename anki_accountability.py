@@ -141,7 +141,7 @@ def myTodayStats(self, _old):
     	txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
     	txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
     except KeyError:
-    	showInfo("ERROR: Anki Accountability cannot find your user profile!<br><br>Please run this add-on to supply your name by going to Tools->Email Results and filling out the required information.")
+    	showInfo("ERROR: Anki Accountability cannot find your user profile. This is required to track your progress.<br><br>To track your progress, please supply your user information by going to <br><br>Tools->Enter User Info <br><br>and filling out the required information.")
     	pass
 
 
@@ -157,8 +157,8 @@ def displayPreview(recEmail, userEmail, userName):
 	showInfo("Deck name: %s\n%d cards in deck\nRecipient email: %s\nYour email: %s\nYour name: %s" % (deckName, cardCount, recEmail[0], userEmail[0], userName[0]))
 
 
-# create a new menu item, "Email Results"
-action = QAction("Email Results", mw)
+# create a new menu item, "Enter User Info"
+action = QAction("Enter User Info", mw)
 
 # set it to call requestInfo when it's clicked
 mw.connect(action, SIGNAL("triggered()"), requestInfo)
