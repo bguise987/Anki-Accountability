@@ -141,7 +141,7 @@ def myTodayStats(self, _old):
     	txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
     	txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
     except KeyError:
-    	showInfo("ERROR: Anki Accountability cannot find your user profile. This is required to track your progress.<br><br>To track your progress, please supply your user information by going to <br><br>Tools->Enter User Info <br><br>and filling out the required information.")
+    	showInfo("ERROR: Anki Accountability cannot find your user profile. This is required to display your progress on the statistics page.<br><br>To display your progress, please supply your user information by going to <br><br>Tools->Enter User Info <br><br>and filling out the required information.")
     	pass
 
 
