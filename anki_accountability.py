@@ -35,6 +35,9 @@ def requestInfo():
 	nameLabel = QLabel("<b>Your name: </b>")
 	nameLabel.setTextFormat(1)
 	emailLabel = QLabel("<b>Your email address: </b>")
+	emailLabel.setTextFormat(1)
+	descLabel = QLabel("Please enter your name and email address so we can place this information on the statistics image. This will put a record of your user information on the statistics page rather than having your progress be anonymous.")
+	descLabel.setTextFormat(1)
 
 	# Text boxes for accepting input
 	nameText = QLineEdit()
@@ -49,11 +52,12 @@ def requestInfo():
 
 	# Layout
 	layout = QGridLayout(widget)
-	layout.addWidget(nameLabel, 0, 0)
-	layout.addWidget(nameText, 0, 1)
-	layout.addWidget(emailLabel, 1, 0)
-	layout.addWidget(emailText, 1, 1)
-	layout.addWidget(confirmButton, 2, 1)
+	layout.addWidget(descLabel, 0, 0)
+	layout.addWidget(nameLabel, 1, 0)
+	layout.addWidget(nameText, 1, 1)
+	layout.addWidget(emailLabel, 2, 0)
+	layout.addWidget(emailText, 2, 1)
+	layout.addWidget(confirmButton, 3, 1)
 
 	# Set tab order for quick data entry
 	widget.setTabOrder(nameText, emailText)
@@ -108,39 +112,39 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 
 
 def myTodayStats(self, _old):
-    txt = _old(self)
+	txt = _old(self)
 
-    try:
-    	# Extract user info from use mw.col.conf
-    	userName = mw.col.conf['first_name_anki_actbil'] + " " + mw.col.conf['last_name_anki_actbil']
-    	userEmail = mw.col.conf['email_addr_anki_actbil']
+	try:
+		# Extract user info from use mw.col.conf
+		userName = mw.col.conf['first_name_anki_actbil'] + " " + mw.col.conf['last_name_anki_actbil']
+		userEmail = mw.col.conf['email_addr_anki_actbil']
 
-    	# Grab data on user's progress
-        # Some of this code is taken from stats.py within anki
+		# Grab data on user's progress
+		# Some of this code is taken from stats.py within anki
 
-        # Run code to grab the eases data from stats
-        #deckStats = mw.col.stats()
-        # Due to 'private' methods here, run easeGraph()
-        # and extract data we'd like from it's returned text
-        #results = deckStats.easeGraph()
+		# Run code to grab the eases data from stats
+		#deckStats = mw.col.stats()
+		# Due to 'private' methods here, run easeGraph()
+		# and extract data we'd like from it's returned text
+		#results = deckStats.easeGraph()
 
-    	txt += self._title(
-	        _("Anki Accountability"),
-    	    _("<font size='5'>" + userName + ", " + userEmail + "</font>"))
+		txt += self._title(
+			_("Anki Accountability"),
+			_("<font size='5'>" + userName + ", " + userEmail + "</font>"))
 
-    	# Get some information about the deck
-    	deckId = mw.col.decks.selected()
-    	deckName = mw.col.decks.name(deckId)
-        cardCount = mw.col.db.scalar("select count() from cards where did is %s" % deckId)
+		# Get some information about the deck
+		deckId = mw.col.decks.selected()
+		deckName = mw.col.decks.name(deckId)
+		cardCount = mw.col.db.scalar("select count() from cards where did is %s" % deckId)
 
-    	txt += "<div><b>Deck name: " + deckName + "</b></div>"
-    	txt += "<div><b>Total cards in deck: </b>" + str(cardCount) + "</div>"
-    except KeyError:
-    	showInfo("ERROR: Anki Accountability cannot find your user profile. This is required to display your progress on the statistics page.<br><br>To display your progress, please supply your user information by going to <br><br>Tools->Enter User Info <br><br>and filling out the required information.")
-    	pass
+		txt += "<div><b>Deck name: " + deckName + "</b></div>"
+		txt += "<div><b>Total cards in deck: </b>" + str(cardCount) + "</div>"
+	except KeyError:
+		showInfo("ERROR: Anki Accountability cannot find your user profile. This is required to display your progress on the statistics page.<br><br>To display your progress, please supply your user information by going to <br><br>Tools->Enter User Info <br><br>and filling out the required information.")
+		pass
 
 
-    return txt
+	return txt
 
 
 def displayPreview(recEmail, userEmail, userName):
