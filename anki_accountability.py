@@ -124,9 +124,6 @@ def myTodayStats(self, _old):
         # and extract data we'd like from it's returned text
         #results = deckStats.easeGraph()
 
-    	cardsRight = 0
-    	cardsWrong = 0
-
     	txt += self._title(
 	        _("Anki Accountability"),
     	    _("<font size='5'>" + userName + ", " + userEmail + "</font>"))
@@ -137,9 +134,7 @@ def myTodayStats(self, _old):
         cardCount = mw.col.db.scalar("select count() from cards where did is %s" % deckId)
 
     	txt += "<div><b>Deck name: " + deckName + "</b></div>"
-    	txt += "<div><b>Total cards: </b>" + str(cardCount) + "</div>"
-    	txt += "<div><b>Cards right: </b>" + str(cardsRight) + "</div>"
-    	txt += "<div><b>Cards wrong: </b>" + str(cardsWrong) + "</div>"
+    	txt += "<div><b>Total cards in deck: </b>" + str(cardCount) + "</div>"
     except KeyError:
     	showInfo("ERROR: Anki Accountability cannot find your user profile. This is required to display your progress on the statistics page.<br><br>To display your progress, please supply your user information by going to <br><br>Tools->Enter User Info <br><br>and filling out the required information.")
     	pass
