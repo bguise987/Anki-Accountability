@@ -51,14 +51,21 @@ def requestInfo():
 	confirmButton.clicked.connect(lambda: storeUserInfo(confirmButton, nameText, emailText, widget))
 	confirmButton.setFixedWidth(80)
 
-	# Layout
-	layout = QGridLayout(widget)
-	layout.addWidget(descLabel, 0, 1)
-	layout.addWidget(nameLabel, 1, 0)
-	layout.addWidget(nameText, 1, 1)
-	layout.addWidget(emailLabel, 2, 0)
-	layout.addWidget(emailText, 2, 1)
-	layout.addWidget(confirmButton, 3, 1)
+	# Layout - create a main layout and then separate it into top and bottom
+	# Top will be just the description, bottom will be the form
+	mainLayout = QVBoxLayout(widget)
+
+	# Bottom layout items
+	bottomLayout = QGridLayout(widget)
+	bottomLayout.addWidget(nameLabel, 0, 0)
+	bottomLayout.addWidget(nameText, 0, 1)
+	bottomLayout.addWidget(emailLabel, 1, 0)
+	bottomLayout.addWidget(emailText, 1, 1)
+	bottomLayout.addWidget(confirmButton, 2, 1)
+
+	# Add top and bottom layout items into the main layout
+	mainLayout.addWidget(descLabel)
+	mainLayout.addLayout(bottomLayout)
 
 	# Set tab order for quick data entry
 	widget.setTabOrder(nameText, emailText)
