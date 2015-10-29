@@ -29,15 +29,16 @@ def requestInfo():
 	# Setup and show the window
 	mw.myWidget = widget = QWidget()
 	widget.setWindowTitle("Anki Accountability")
-	widget.setGeometry(350, 200, 500, 75)
+	widget.setGeometry(350, 200, 500, 225)
 
 	# Labels
 	nameLabel = QLabel("<b>Your name: </b>")
 	nameLabel.setTextFormat(1)
 	emailLabel = QLabel("<b>Your email address: </b>")
 	emailLabel.setTextFormat(1)
-	descLabel = QLabel("Please enter your name and email address so we can place this information on the statistics image. This will put a record of your user information on the statistics page rather than having your progress be anonymous.")
+	descLabel = QLabel("Please enter your name and email address so we can place this information on the statistics image.\nThis will put a record of your user information on the statistics page rather than having your progress be anonymous.")
 	descLabel.setTextFormat(1)
+	descLabel.setWordWrap(True)
 
 	# Text boxes for accepting input
 	nameText = QLineEdit()
@@ -52,7 +53,7 @@ def requestInfo():
 
 	# Layout
 	layout = QGridLayout(widget)
-	layout.addWidget(descLabel, 0, 0)
+	layout.addWidget(descLabel, 0, 1)
 	layout.addWidget(nameLabel, 1, 0)
 	layout.addWidget(nameText, 1, 1)
 	layout.addWidget(emailLabel, 2, 0)
