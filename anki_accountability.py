@@ -16,6 +16,7 @@ from aqt.utils import showInfo
 from aqt.utils import getText
 
 from anki import stats
+from anki import sched
 from anki.hooks import wrap
 import time, re, sys
 
@@ -154,6 +155,12 @@ def myTodayStats(self, _old):
 
 	return txt
 
+# New finished message method that will log a complete study session for us
+def myFinishedMsg(self, _old):
+	# Log the progress
+	showInfo("Study session complete! Now logging...")
+	# Run the original method
+	_old(self)
 
 def displayPreview(recEmail, userEmail, userName):
 	# get the number of cards in the current collection, which is stored in
@@ -172,9 +179,16 @@ mw.connect(action, SIGNAL("triggered()"), requestInfo)
 # and add it to the tools menu
 mw.form.menuTools.addAction(action)
 
-# Ensure our data is added to the Anki stats image
+# Ensure our data is added to the Anki stats image by wrapping the existing method
 try:
 	stats.CollectionStats.todayStats = wrap(stats.CollectionStats.todayStats, myTodayStats, "around")
+except AttributeError:
+	showInfo("Error running Anki Accountability. Please check your Anki version.")
+	pass
+
+# Enable logging of a complete study session by wrapping existing method
+try:
+	sched.Scheduler.finishedMsg = wrap(sched.Scheduler.finishedMsg, myFinishedMsg, "around")
 except AttributeError:
 	showInfo("Error running Anki Accountability. Please check your Anki version.")
 	pass
