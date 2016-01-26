@@ -19,6 +19,10 @@ from anki import stats
 from anki import sched
 from anki.hooks import wrap
 import time, re, sys
+# import so we can access SQLite databases outside of usual Anki calls
+import sqlite3 as sqlite
+# import datetime so we can log the date when a user studies
+import datetime as dt
 
 # import all of the Qt GUI library
 from aqt.qt import *
@@ -156,9 +160,35 @@ def myTodayStats(self, _old):
 	return txt
 
 # New finished message method that will log a complete study session for us
+# Store this in prefs.db within the user's ~/Documents/Anki/User 1/collection.media directory
+# Store date in YYYY-MM-DD format so SQL commands can help us eliminate old dates
 def myFinishedMsg(self, _old):
 	# Log the progress
 	showInfo("Study session complete! Now logging...")
+
+	# Grab the current date, split out the parts we want
+	now = dt.datetime.now()
+	year = now.year
+	month = now.month
+	day = now.day
+
+	# Merge these values together so they can be stored in the database
+	curr_date = str(year) + "-" + str(month) + "-" + str(day)
+
+
+	con = sqlite.connect('anki_accountability_study.db')
+	cur = con.cursor()
+	cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(id INTEGER PRIMARY KEY AUTOINCREMENT, study_date CHAR(15) NOT NULL, study_complete INT NOT NULL)")
+	# Store the current date into the database and 100% complete
+	study_percent = 100
+	cur.execute('INSERT INTO anki_accountability(Study_date, Study_complete) VALUES(?, ?)', (curr_date, study_percent))
+	# Delete old database entries so that we only keep the last week of studying
+	#cur.execute('DELETE FROM ANKI_ACCOUNTABILITY WHERE Id IN (SELECT Id FROM ANKI_ACCOUNTABILITY ORDER BY date(Study_date) ASC Limit 1)')
+	con.commit()
+	con.close()
+
+
+
 	# Run the original method
 	_old(self)
 
@@ -192,3 +222,19 @@ try:
 except AttributeError:
 	showInfo("Error running Anki Accountability. Please check your Anki version.")
 	pass
+
+# Setup a separate table to allow us to store study information
+# Store this in prefs.db within the user's ~/Documents/Anki/User 1/collection.media directory
+#try:
+	#con = sqlite.connect('anki_accountability_study.db')
+	#cur = con.cursor()
+	#cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(id INTEGER PRIMARY KEY AUTOINCREMENT, study_date CHAR(15) NOT NULL, study_complete INT NOT NULL)")
+	#cur.execute('INSERT INTO anki_accountability(Study_date, Study_complete) VALUES("2015-12-15", 0)')
+	#con.commit()
+	#con.close()
+	#userName = mw.col.conf['first_name_anki_actbil']
+#except Exception as ex:
+#	showInfo("Error creating database table for Anki Accountability. ")
+#	for err in ex.args:
+#		showInfo(err)
+#	pass
