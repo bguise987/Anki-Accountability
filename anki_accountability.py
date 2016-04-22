@@ -169,8 +169,9 @@ def myFinishedMsg(self, _old):
 	# Grab the current date, split out the parts we want
 	now = dt.datetime.now()
 	year = now.year
-	month = now.month
-	day = now.day
+	# .strftime('%m') and .strftime('%d') used so that month is double digit for SQLite to properly process the date
+	month = now.strftime('%m')
+	day = now.strftime('%d')
 
 	# Merge these values together so they can be stored in the database
 	curr_date = str(year) + "-" + str(month) + "-" + str(day)
