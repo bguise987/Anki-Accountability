@@ -179,7 +179,7 @@ def myFinishedMsg(self, _old):
 
 	con = sqlite.connect('anki_accountability_study.db')
 	cur = con.cursor()
-	cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(id INTEGER PRIMARY KEY AUTOINCREMENT, study_date CHAR(15) NOT NULL, study_complete INT NOT NULL)")
+	cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(study_date CHAR(15) NOT NULL PRIMARY KEY, study_complete INT NOT NULL)")
 	# Store the current date into the database and 100% complete
 	study_percent = 100
 	cur.execute('INSERT INTO anki_accountability(Study_date, Study_complete) VALUES(?, ?)', (curr_date, study_percent))
