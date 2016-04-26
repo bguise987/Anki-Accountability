@@ -174,15 +174,18 @@ def myFinishedMsg(self, _old):
 	day = now.strftime('%d')
 
 	# Merge these values together so they can be stored in the database
-	curr_date = str(year) + "-" + str(month) + "-" + str(day)
+	currDate = str(year) + "-" + str(month) + "-" + str(day)
 
 
 	con = sqlite.connect('anki_accountability_study.db')
 	cur = con.cursor()
-	cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(study_date CHAR(15) NOT NULL PRIMARY KEY, study_complete INT NOT NULL)")
+	cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(ROWID INTEGER PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, study_complete INTEGER NOT NULL)")
 	# Store the current date into the database and 100% complete
-	study_percent = 100
-	cur.execute('INSERT INTO anki_accountability(study_date, study_complete) VALUES(?, ?)', (curr_date, study_percent))
+	studyPercent = 100
+	deckId = mw.col.decks.selected()
+	deckName = mw.col.decks.name(deckId)
+	deckName = formatDeckNameForDatabase(deckName)
+	cur.execute('INSERT INTO anki_accountability(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, currDate, studyPercent))
 	# Delete old database entries so that we only keep the last week of studying
 	#cur.execute('DELETE FROM ANKI_ACCOUNTABILITY WHERE Id IN (SELECT Id FROM ANKI_ACCOUNTABILITY ORDER BY date(Study_date) ASC Limit 1)')
 	con.commit()
@@ -200,6 +203,11 @@ def displayPreview(recEmail, userEmail, userName):
 	deckId = mw.col.decks.selected()
 	deckName = mw.col.decks.name(deckId)
 	showInfo("Deck name: %s\n%d cards in deck\nRecipient email: %s\nYour email: %s\nYour name: %s" % (deckName, cardCount, recEmail[0], userEmail[0], userName[0]))
+
+def formatDeckNameForDatabase(str):
+	res = str.replace(" ", "")
+	res = res[:30] if len(res) > 30 else res
+	return res
 
 
 # create a new menu item, "Enter User Info"
