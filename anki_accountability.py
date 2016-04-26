@@ -179,10 +179,10 @@ def myFinishedMsg(self, _old):
 
 	con = sqlite.connect('anki_accountability_study.db')
 	cur = con.cursor()
-	cur.execute("create table if not exists ANKI_ACCOUNTABILITY(STUDY_DATE char(15) not null primary key, STUDY_COMPLETE int not null)")
+	cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(study_date CHAR(15) NOT NULL PRIMARY KEY, study_complete INT NOT NULL)")
 	# Store the current date into the database and 100% complete
 	study_percent = 100
-	cur.execute('INSERT INTO ANKI_ACCOUNTABILITY(STUDY_DATE, STUDY_COMPLETE) values(?, ?)', (curr_date, study_percent))
+	cur.execute('INSERT INTO anki_accountability(study_date, study_complete) VALUES(?, ?)', (curr_date, study_percent))
 	# Delete old database entries so that we only keep the last week of studying
 	#cur.execute('DELETE FROM ANKI_ACCOUNTABILITY WHERE Id IN (SELECT Id FROM ANKI_ACCOUNTABILITY ORDER BY date(Study_date) ASC Limit 1)')
 	con.commit()
