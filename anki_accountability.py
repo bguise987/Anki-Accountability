@@ -12,17 +12,21 @@
 from aqt import mw
 # import the "show info" tool from utils.py
 from aqt.utils import showInfo
-
 from aqt.utils import getText
 
+from anki.hooks import wrap
+# imports for methods that we wrap
 from anki import stats
 from anki import sched
-from anki.hooks import wrap
+from aqt import main
+
+
 import time, re, sys
 # import so we can access SQLite databases outside of usual Anki calls
 import sqlite3 as sqlite
 # import datetime so we can log the date when a user studies
 import datetime as dt
+from datetime import timedelta
 
 # import all of the Qt GUI library
 from aqt.qt import *
@@ -126,6 +130,33 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 
 def myTodayStats(self, _old):
 	txt = _old(self)
+	# DB connection code
+	con = sqlite.connect('anki_accountability_study.db')
+	cur = con.cursor()
+
+	# Get the current date
+	now = dt.datetime.now()
+	# Grab the current deckName
+	deckId = mw.col.decks.selected()
+	deckName = mw.col.decks.name(deckId)
+	deckName = formatDeckNameForDatabase(deckName)
+	# Go to the last 7 days and check if there's a DB entry
+	for i in range(1,7):
+		prevDate = now - timedelta(days = i)
+		prevDate = str(prevDate.year) + "-" + str(prevDate.strftime('%m')) + "-" + str(prevDate.strftime('%d'))
+		# 	If there is no entry, create one and set to 0
+		cur.execute("SELECT * FROM anki_accountability WHERE deck_name = ? AND study_date = ?", (deckName, prevDate))
+		row = str(cur.fetchone())
+
+		if (row == 'None'):
+			showInfo("Found none")
+			# Store this date into the DB with value of 0
+			cur.execute('INSERT INTO anki_accountability(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, prevDate, 0))
+		else:
+			showInfo(row)
+	
+	con.commit()
+	con.close()
 
 	try:
 		# Extract user info from use mw.col.conf
@@ -172,6 +203,7 @@ def myFinishedMsg(self, _old):
 	# .strftime('%m') and .strftime('%d') used so that month is double digit for SQLite to properly process the date
 	month = now.strftime('%m')
 	day = now.strftime('%d')
+	#TODO: Possible to probably do this formatting in one line. See the datetime.datetime API for details
 
 	# Merge these values together so they can be stored in the database
 	currDate = str(year) + "-" + str(month) + "-" + str(day)
@@ -191,7 +223,11 @@ def myFinishedMsg(self, _old):
 	con.commit()
 	con.close()
 
+	# Run the original method
+	_old(self)
 
+def myCloseEvent(self, _old):
+	showInfo("Successfully intercepted the shutdown of Anki!")
 
 	# Run the original method
 	_old(self)
@@ -222,14 +258,21 @@ mw.form.menuTools.addAction(action)
 try:
 	stats.CollectionStats.todayStats = wrap(stats.CollectionStats.todayStats, myTodayStats, "around")
 except AttributeError:
-	showInfo("Error running Anki Accountability. Please check your Anki version.")
+	showInfo("Error running Anki Accountability. Could not wrap the todayStats method.")
 	pass
 
 # Enable logging of a complete study session by wrapping existing method
 try:
 	sched.Scheduler.finishedMsg = wrap(sched.Scheduler.finishedMsg, myFinishedMsg, "around")
 except AttributeError:
-	showInfo("Error running Anki Accountability. Please check your Anki version.")
+	showInfo("Error running Anki Accountability. Could not wrap the finishedMsg method.")
+	pass
+
+# Enable logging of partial study events by wrapping the close method
+try:
+	main.AnkiQt.closeEvent = wrap(main.AnkiQt.closeEvent, myCloseEvent, "around")
+except AttributeError:
+	showInfo("Error running Anki Accountability. Could not wrap the closeEvent method.")
 	pass
 
 # Setup a separate table to allow us to store study information
