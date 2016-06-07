@@ -141,20 +141,21 @@ def myTodayStats(self, _old):
 	deckName = mw.col.decks.name(deckId)
 	deckName = formatDeckNameForDatabase(deckName)
 	# Go to the last 7 days and check if there's a DB entry
-	for i in range(1,7):
+	for i in range(1, 7):
 		prevDate = now - timedelta(days = i)
 		prevDate = str(prevDate.year) + "-" + str(prevDate.strftime('%m')) + "-" + str(prevDate.strftime('%d'))
 		# 	If there is no entry, create one and set to 0
 		cur.execute("SELECT * FROM anki_accountability WHERE deck_name = ? AND study_date = ?", (deckName, prevDate))
 		row = str(cur.fetchone())
 
+		# We found a blank study day!
 		if (row == 'None'):
-			showInfo("Found none")
+			# TODO: Take this out when done:  showInfo("Found none")
 			# Store this date into the DB with value of 0
 			cur.execute('INSERT INTO anki_accountability(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, prevDate, 0))
-		else:
-			showInfo(row)
-	
+		#else:
+			# TODO: Take this out when done: showInfo(row)
+
 	con.commit()
 	con.close()
 
@@ -183,6 +184,24 @@ def myTodayStats(self, _old):
 
 		txt += "<div><b>Deck name: " + deckName + "</b></div>"
 		txt += "<div><b>Total cards in deck: </b>" + str(cardCount) + "</div>"
+		txt += "<div><b>Studying last 7 days: </b></div>"
+
+		# Grab DB in such a way we can get cols by name
+		con = sqlite.connect('anki_accountability_study.db')
+		con.row_factory = sqlite.Row
+		cur = con.cursor()
+
+		for i in range(7, 1, -1):
+			prevDate = now - timedelta(days = i)
+			prevDate = str(prevDate.year) + "-" + str(prevDate.strftime('%m')) + "-" + str(prevDate.strftime('%d'))
+
+		deckName = formatDeckNameForDatabase(deckName)
+		cur.execute("SELECT * FROM (SELECT study_date, study_complete FROM anki_accountability WHERE deck_name = ? ORDER BY study_date DESC LIMIT 7) ORDER BY study_date", (deckName,))
+		for row in cur:
+			txt += "<div>" + row['study_date'] + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + str(row['study_complete']) + "</div>"
+
+		con.close()
+
 	except KeyError:
 		showInfo("ERROR: Anki Accountability cannot find your user profile. This is required to display your progress on the statistics page.<br><br>To display your progress, please supply your user information by going to <br><br>Tools->Enter User Info <br><br>and filling out the required information.")
 		pass
