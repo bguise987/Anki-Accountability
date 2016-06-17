@@ -214,7 +214,8 @@ def myTodayStats(self, _old):
 # Store date in YYYY-MM-DD format so SQL commands can help us eliminate old dates
 def myFinishedMsg(self, _old):
 	# Log the progress
-	showInfo("Study session complete! Now logging...")
+	# TODO: Remove this informational message
+	#showInfo("Study session complete! Now logging...")
 
 	# Grab the current date, split out the parts we want
 	now = dt.datetime.now()
@@ -227,19 +228,32 @@ def myFinishedMsg(self, _old):
 	# Merge these values together so they can be stored in the database
 	currDate = str(year) + "-" + str(month) + "-" + str(day)
 
+	# Get the deck name
+	deckId = mw.col.decks.selected()
+	deckName = mw.col.decks.name(deckId)
+	deckName = formatDeckNameForDatabase(deckName)
+
 
 	con = sqlite.connect('anki_accountability_study.db')
 	cur = con.cursor()
 	cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(ROWID INTEGER PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, study_complete INTEGER NOT NULL)")
-	# Store the current date into the database and 100% complete
-	studyPercent = 100
-	deckId = mw.col.decks.selected()
-	deckName = mw.col.decks.name(deckId)
-	deckName = formatDeckNameForDatabase(deckName)
-	cur.execute('INSERT INTO anki_accountability(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, currDate, studyPercent))
-	# Delete old database entries so that we only keep the last week of studying
-	#cur.execute('DELETE FROM ANKI_ACCOUNTABILITY WHERE Id IN (SELECT Id FROM ANKI_ACCOUNTABILITY ORDER BY date(Study_date) ASC Limit 1)')
-	con.commit()
+
+	# Check if we have already made a log of today's session, and whether it was 100%
+	cur.execute("SELECT * FROM anki_accountability WHERE deck_name = ? AND study_date = ?", (deckName, currDate))
+	row = cur.fetchone()
+
+	# We found a blank study day!
+	if (row == None):
+		# Store the current date into the database and 100% complete
+		studyPercent = 100
+		cur.execute('INSERT INTO anki_accountability(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, currDate, studyPercent))
+		con.commit()
+	else:
+		# Not a blank study day--check if study_complete is 100%
+		if (row[3] != 100):
+			rowId = row['ROWID']
+			cur.execute('INSERT OR REPLACE INTO anki_accountability VALUES(?, ?, ?, ?)', (rowId, deckName, currDate, studyPercent))
+
 	con.close()
 
 	# Run the original method
