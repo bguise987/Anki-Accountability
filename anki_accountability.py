@@ -198,7 +198,13 @@ def myTodayStats(self, _old):
 		deckName = formatDeckNameForDatabase(deckName)
 		cur.execute("SELECT * FROM (SELECT study_date, study_complete FROM anki_accountability WHERE deck_name = ? ORDER BY study_date DESC LIMIT 7) ORDER BY study_date", (deckName,))
 		for row in cur:
-			txt += "<div>" + row['study_date'] + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + str(row['study_complete']) + "</div>"
+			studyCompletion = "null"
+			if (row['study_complete'] == 0):
+				studyCompletion = "Incomplete"
+			else:
+				studyCompletion = "Complete"
+
+			txt += "<div>" + row['study_date'] + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + studyCompletion + "</div>"
 
 		con.close()
 
