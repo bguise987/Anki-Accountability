@@ -53,10 +53,10 @@ def requestInfo():
 	nameLabel.setTextFormat(1)
 	emailLabel = QLabel("<b>Your email address: </b>")
 	emailLabel.setTextFormat(1)
-	descLabel = QLabel("Please enter your name and email address so we can place'
-		'this information on the statistics image.\nThis will put a record of '
-		'your user information on the statistics page rather than having your '
-		'progress be anonymous.")
+	descLabel = QLabel("Please enter your name and email address so we can place\
+	 this information on the statistics image.\nThis will put a record of your\
+	 user information on the statistics page rather than having your progress be\
+	 anonymous.")
 	descLabel.setTextFormat(1)
 	descLabel.setWordWrap(True)
 
