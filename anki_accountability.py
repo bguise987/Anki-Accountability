@@ -10,20 +10,22 @@
 
 # import the main window object (mw) from ankiqt
 from aqt import mw
+
 # import the "show info" tool from utils.py
 from aqt.utils import showInfo
 from aqt.utils import getText
 
 from anki.hooks import wrap
+
 # imports for methods that we wrap
 from anki import stats
 from anki import sched
 from aqt import main
 
-
 import time, re, sys
 # import so we can access SQLite databases outside of usual Anki calls
 import sqlite3 as sqlite
+
 # import datetime so we can log the date when a user studies
 import datetime as dt
 from datetime import timedelta
@@ -313,19 +315,3 @@ try:
 except AttributeError:
 	showInfo("Error running Anki Accountability. Could not wrap the closeEvent method.")
 	pass
-
-# Setup a separate table to allow us to store study information
-# Store this in prefs.db within the user's ~/Documents/Anki/User 1/collection.media directory
-#try:
-	#con = sqlite.connect('anki_accountability_study.db')
-	#cur = con.cursor()
-	#cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(id INTEGER PRIMARY KEY AUTOINCREMENT, study_date CHAR(15) NOT NULL, study_complete INT NOT NULL)")
-	#cur.execute('INSERT INTO anki_accountability(Study_date, Study_complete) VALUES("2015-12-15", 0)')
-	#con.commit()
-	#con.close()
-	#userName = mw.col.conf['first_name_anki_actbil']
-#except Exception as ex:
-#	showInfo("Error creating database table for Anki Accountability. ")
-#	for err in ex.args:
-#		showInfo(err)
-#	pass
