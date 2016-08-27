@@ -35,7 +35,7 @@ from aqt.qt import *
 
 
 def requestInfo():
-	# Show a message box and get some info from the user
+	""" Show a message box and get the user's name and email address """
 
 	# Setup and show the window
 	mw.myWidget = widget = QWidget()
@@ -100,7 +100,7 @@ def requestInfo():
 	widget.show()
 
 def storeUserInfo(button, nameField, emailField, dialogBox):
-	# Use some Regex's to split up the user's name into first and last name
+	""" Use some Regex's to split up the user's name into first and last name """
 	enteredName = nameField.text().split(' ')
 	firstName = enteredName[0]
 	lastName = enteredName[1]
@@ -119,7 +119,6 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 	# Note: We don't check to see if a previous profile exists. This allows the user to
 	# change his/her email address or name if a previous error was made.
 	mw.col.conf['exist_prof_anki_actbil'] = True
-
 	mw.col.conf['first_name_anki_actbil'] = firstName
 	mw.col.conf['last_name_anki_actbil'] = lastName
 	mw.col.conf['email_addr_anki_actbil'] = enteredEmail
@@ -131,6 +130,9 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 
 
 def myTodayStats(self, _old):
+	"""Wrapped version of todayStats. This code will run our modified version
+	and then run the original as well """
+
 	txt = _old(self)
 	# DB connection code
 	con = sqlite.connect('anki_accountability_study.db')
@@ -217,10 +219,10 @@ def myTodayStats(self, _old):
 
 	return txt
 
-# New finished message method that will log a complete study session for us
-# Store this in prefs.db within the user's ~/Documents/Anki/User 1/collection.media directory
-# Store date in YYYY-MM-DD format so SQL commands can help us eliminate old dates
 def myFinishedMsg(self, _old):
+	""" New finished message method that will log a complete study session for us
+	 	Store this in prefs.db within the user's ~/Documents/Anki/User 1/collection.media directory
+	 	Store date in YYYY-MM-DD format so SQL commands can help us eliminate old dates """
 	# Log the progress
 	# TODO: Remove this informational message
 	#showInfo("Study session complete! Now logging...")
@@ -274,14 +276,16 @@ def myCloseEvent(self, _old):
 	_old(self)
 
 def displayPreview(recEmail, userEmail, userName):
-	# get the number of cards in the current collection, which is stored in
-	# the main window
+	""" get the number of cards in the current collection, which is stored in
+	 	the main window """
 	cardCount = mw.col.cardCount()
 	deckId = mw.col.decks.selected()
 	deckName = mw.col.decks.name(deckId)
 	showInfo("Deck name: %s\n%d cards in deck\nRecipient email: %s\nYour email: %s\nYour name: %s" % (deckName, cardCount, recEmail[0], userEmail[0], userName[0]))
 
 def formatDeckNameForDatabase(str):
+	""" Format the deck name in a consistent manner so that we can store and
+	lookup information easily. """
 	res = str.replace(" ", "")
 	res = res[:30] if len(res) > 30 else res
 	return res
