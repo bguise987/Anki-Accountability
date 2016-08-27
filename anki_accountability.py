@@ -53,7 +53,10 @@ def requestInfo():
 	nameLabel.setTextFormat(1)
 	emailLabel = QLabel("<b>Your email address: </b>")
 	emailLabel.setTextFormat(1)
-	descLabel = QLabel("Please enter your name and email address so we can place this information on the statistics image.\nThis will put a record of your user information on the statistics page rather than having your progress be anonymous.")
+	descLabel = QLabel("Please enter your name and email address so we can place'
+		'this information on the statistics image.\nThis will put a record of '
+		'your user information on the statistics page rather than having your '
+		'progress be anonymous.")
 	descLabel.setTextFormat(1)
 	descLabel.setWordWrap(True)
 
@@ -228,7 +231,12 @@ def myTodayStats(self, _old):
 		con.close()
 
 	except KeyError:
-		showInfo("ERROR: Anki Accountability cannot find your user profile. This is required to display your progress on the statistics page.<br><br>To display your progress, please supply your user information by going to <br><br>Tools->Enter User Info <br><br>and filling out the required information.")
+		showInfo(
+			"ERROR: Anki Accountability cannot find your user profile."
+			" This is required to display your progress on the statistics page."
+			"<br><br>To display your progress, please supply your user information "
+			"by going to <br><br>Tools->Enter User Info <br><br>and filling out the "
+			"required information.")
 		pass
 
 
@@ -260,11 +268,13 @@ def myFinishedMsg(self, _old):
 	deckName = mw.col.decks.name(deckId)
 	deckName = formatDeckNameForDatabase(deckName)
 
-	# TODO: Refactor so database name is a constant
 	con = sqlite.connect(DATABASE_NAME)
 	cur = con.cursor()
 	# TODO: Refactor so that DB creation is in a sep. method
-	cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, study_complete INTEGER NOT NULL)')
+	cur.execute(
+		'CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER '
+		'PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, '
+		'study_complete INTEGER NOT NULL)')
 
 	# Check if we have already made a log of today's session, and whether it was 100%
 	# TODO: Refactor so that this is a sep. method
@@ -276,7 +286,8 @@ def myFinishedMsg(self, _old):
 		# Store the current date into the database and 100% complete
 		studyPercent = 100
 		# TODO: Refactor so that this is a separate method
-		cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, currDate, studyPercent))
+		cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date,'
+			' study_complete) VALUES(NULL, ?, ?, ?)', (deckName, currDate, studyPercent))
 		con.commit()
 	else:
 		# Not a blank study day--check if study_complete is 100%
