@@ -33,6 +33,10 @@ from datetime import timedelta
 # import all of the Qt GUI library
 from aqt.qt import *
 
+# Some constants
+DATABASE_NAME = 'anki_accountability_study.db'
+TABLE_NAME = 'anki_accountability'
+
 
 def requestInfo():
 	""" Show a message box and get the user's name and email address
@@ -102,14 +106,18 @@ def requestInfo():
 	widget.show()
 
 def storeUserInfo(button, nameField, emailField, dialogBox):
-	""" Use some Regex's to split up the user's name into first and last name """
+	""" Called from the dialog box created by the requestInfo() method.
+	 	This will check to see if the user has a profile already in the
+		mw.col dictionary and then store their information. Once the information
+		is stored, it will also close the diaglogBox for us. """
+
+	# Use some Regex's to split up the user's name into first and last name
 	enteredName = nameField.text().split(' ')
 	firstName = enteredName[0]
 	lastName = enteredName[1]
+
 	# Get the user's email address
 	enteredEmail = emailField.text()
-
-
 
 	# Check to see if the user has a profile already
 	try:
@@ -118,8 +126,8 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 		mw.col.conf['exist_prof_anki_actbil'] = False
 
 	# Store information to mw.col.conf, as per add on writing guide
-	# Note: We don't check to see if a previous profile exists. This allows the user to
-	# change his/her email address or name if a previous error was made.
+	# Note: We don't check to see if a previous profile exists. This allows the
+	# user to change his/her email address or name if a previous error was made.
 	mw.col.conf['exist_prof_anki_actbil'] = True
 	mw.col.conf['first_name_anki_actbil'] = firstName
 	mw.col.conf['last_name_anki_actbil'] = lastName
@@ -132,13 +140,13 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 
 
 def myTodayStats(self, _old):
-	"""Wrapped version of todayStats. This code will run our modified version
-	and then run the original as well """
+	""" Wrapped version of todayStats. This code will run our modified version
+		and then run the original as well """
 
 	txt = _old(self)
 
 	# DB connection code
-	con = sqlite.connect('anki_accountability_study.db')
+	con = sqlite.connect(DATABASE_NAME)
 	cur = con.cursor()
 
 	# Get the current date
@@ -155,14 +163,14 @@ def myTodayStats(self, _old):
 		prevDate = str(prevDate.year) + "-" + str(prevDate.strftime('%m')) + "-" + str(prevDate.strftime('%d'))
 
 		# 	If there is no entry, create one and set to 0
-		cur.execute("SELECT * FROM anki_accountability WHERE deck_name = ? AND study_date = ?", (deckName, prevDate))
+		cur.execute("SELECT * FROM " + TABLE_NAME + "WHERE deck_name = ? AND study_date = ?", (deckName, prevDate))
 		row = str(cur.fetchone())
 
 		# We found a blank study day!
 		if (row == 'None'):
 			# TODO: Take this out when done:  showInfo("Found none")
 			# Store this date into the DB with value of 0
-			cur.execute('INSERT INTO anki_accountability(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, prevDate, 0))
+			cur.execute('INSERT INTO ' + TABLE_NAME + ' (rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, prevDate, 0))
 		#else:
 			# TODO: Take this out when done: showInfo(row)
 
@@ -178,10 +186,10 @@ def myTodayStats(self, _old):
 		# Some of this code is taken from stats.py within anki
 
 		# Run code to grab the eases data from stats
-		#deckStats = mw.col.stats()
+		# deckStats = mw.col.stats()
 		# Due to 'private' methods here, run easeGraph()
 		# and extract data we'd like from it's returned text
-		#results = deckStats.easeGraph()
+		# results = deckStats.easeGraph()
 
 		txt += self._title(
 			_("Anki Accountability"),
@@ -197,7 +205,7 @@ def myTodayStats(self, _old):
 		txt += "<div><b>Studying last 7 days: </b></div>"
 
 		# Grab DB in such a way we can get cols by name
-		con = sqlite.connect('anki_accountability_study.db')
+		con = sqlite.connect(DATABASE_NAME)
 		con.row_factory = sqlite.Row
 		cur = con.cursor()
 
@@ -206,7 +214,8 @@ def myTodayStats(self, _old):
 			prevDate = str(prevDate.year) + "-" + str(prevDate.strftime('%m')) + "-" + str(prevDate.strftime('%d'))
 
 		deckName = formatDeckNameForDatabase(deckName)
-		cur.execute("SELECT * FROM (SELECT study_date, study_complete FROM anki_accountability WHERE deck_name = ? ORDER BY study_date DESC LIMIT 7) ORDER BY study_date", (deckName,))
+		cur.execute("SELECT * FROM (SELECT study_date, study_complete FROM " + TABLE_NAME + " WHERE deck_name = ? ORDER BY study_date DESC LIMIT 7) ORDER BY study_date", (deckName,))
+
 		for row in cur:
 			studyCompletion = "null"
 			if (row['study_complete'] == 0):
@@ -231,7 +240,7 @@ def myFinishedMsg(self, _old):
 	 	Store date in YYYY-MM-DD format so SQL commands can help us eliminate old dates """
 	# Log the progress
 	# TODO: Remove this informational message
-	#showInfo("Study session complete! Now logging...")
+	# showInfo("Study session complete! Now logging...")
 
 	# Grab the current date, split out the parts we want
 	now = dt.datetime.now()
@@ -240,9 +249,10 @@ def myFinishedMsg(self, _old):
 	# digit for SQLite to properly process the date
 	month = now.strftime('%m')
 	day = now.strftime('%d')
-	#TODO: Possible to probably do this formatting in one line. See the datetime.datetime API for details
+	# TODO: Possible to probably do this formatting in one line. See the datetime.datetime API for details
 
 	# Merge these values together so they can be stored in the database
+	# TODO: Refactor into sep. method
 	currDate = str(year) + "-" + str(month) + "-" + str(day)
 
 	# Get the deck name
@@ -250,25 +260,29 @@ def myFinishedMsg(self, _old):
 	deckName = mw.col.decks.name(deckId)
 	deckName = formatDeckNameForDatabase(deckName)
 
-	con = sqlite.connect('anki_accountability_study.db')
+	# TODO: Refactor so database name is a constant
+	con = sqlite.connect(DATABASE_NAME)
 	cur = con.cursor()
-	cur.execute("CREATE TABLE IF NOT EXISTS anki_accountability(ROWID INTEGER PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, study_complete INTEGER NOT NULL)")
+	# TODO: Refactor so that DB creation is in a sep. method
+	cur.execute("CREATE TABLE IF NOT EXISTS " + TABLE_NAME + "(ROWID INTEGER PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, study_complete INTEGER NOT NULL)")
 
 	# Check if we have already made a log of today's session, and whether it was 100%
-	cur.execute("SELECT * FROM anki_accountability WHERE deck_name = ? AND study_date = ?", (deckName, currDate))
+	# TODO: Refactor so that this is a sep. method
+	cur.execute("SELECT * FROM " + TABLE_NAME + " WHERE deck_name = ? AND study_date = ?", (deckName, currDate))
 	row = cur.fetchone()
 
 	# We found a blank study day!
 	if (row == None):
 		# Store the current date into the database and 100% complete
 		studyPercent = 100
-		cur.execute('INSERT INTO anki_accountability(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, currDate, studyPercent))
+		# TODO: Refactor so that this is a separate method
+		cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, currDate, studyPercent))
 		con.commit()
 	else:
 		# Not a blank study day--check if study_complete is 100%
 		if (row[3] != 100):
 			rowId = row['ROWID']
-			cur.execute('INSERT OR REPLACE INTO anki_accountability VALUES(?, ?, ?, ?)', (rowId, deckName, currDate, studyPercent))
+			cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + ' VALUES(?, ?, ?, ?)', (rowId, deckName, currDate, studyPercent))
 
 	con.close()
 
