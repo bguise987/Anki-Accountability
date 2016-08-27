@@ -134,20 +134,24 @@ def myTodayStats(self, _old):
 	and then run the original as well """
 
 	txt = _old(self)
+
 	# DB connection code
 	con = sqlite.connect('anki_accountability_study.db')
 	cur = con.cursor()
 
 	# Get the current date
 	now = dt.datetime.now()
+
 	# Grab the current deckName
 	deckId = mw.col.decks.selected()
 	deckName = mw.col.decks.name(deckId)
 	deckName = formatDeckNameForDatabase(deckName)
+
 	# Go to the last 7 days and check if there's a DB entry
 	for i in range(1, 7):
 		prevDate = now - timedelta(days = i)
 		prevDate = str(prevDate.year) + "-" + str(prevDate.strftime('%m')) + "-" + str(prevDate.strftime('%d'))
+
 		# 	If there is no entry, create one and set to 0
 		cur.execute("SELECT * FROM anki_accountability WHERE deck_name = ? AND study_date = ?", (deckName, prevDate))
 		row = str(cur.fetchone())
@@ -230,7 +234,8 @@ def myFinishedMsg(self, _old):
 	# Grab the current date, split out the parts we want
 	now = dt.datetime.now()
 	year = now.year
-	# .strftime('%m') and .strftime('%d') used so that month is double digit for SQLite to properly process the date
+	# .strftime('%m') and .strftime('%d') used so that month is double
+	# digit for SQLite to properly process the date
 	month = now.strftime('%m')
 	day = now.strftime('%d')
 	#TODO: Possible to probably do this formatting in one line. See the datetime.datetime API for details
@@ -242,7 +247,6 @@ def myFinishedMsg(self, _old):
 	deckId = mw.col.decks.selected()
 	deckName = mw.col.decks.name(deckId)
 	deckName = formatDeckNameForDatabase(deckName)
-
 
 	con = sqlite.connect('anki_accountability_study.db')
 	cur = con.cursor()
@@ -276,7 +280,7 @@ def myCloseEvent(self, _old):
 	_old(self)
 
 def displayPreview(recEmail, userEmail, userName):
-	""" get the number of cards in the current collection, which is stored in
+	""" Get the number of cards in the current collection, which is stored in
 	 	the main window """
 	cardCount = mw.col.cardCount()
 	deckId = mw.col.decks.selected()
@@ -296,6 +300,7 @@ action = QAction("Enter User Info", mw)
 
 # set it to call requestInfo when it's clicked
 mw.connect(action, SIGNAL("triggered()"), requestInfo)
+
 # and add it to the tools menu
 mw.form.menuTools.addAction(action)
 
