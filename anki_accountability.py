@@ -35,7 +35,9 @@ from aqt.qt import *
 
 
 def requestInfo():
-	""" Show a message box and get the user's name and email address """
+	""" Show a message box and get the user's name and email address
+	 	These pieces of information will be stored in the Anki dictionary
+		and should sync between installations of Anki """
 
 	# Setup and show the window
 	mw.myWidget = widget = QWidget()
