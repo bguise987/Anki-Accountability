@@ -163,14 +163,14 @@ def myTodayStats(self, _old):
 		prevDate = str(prevDate.year) + "-" + str(prevDate.strftime('%m')) + "-" + str(prevDate.strftime('%d'))
 
 		# 	If there is no entry, create one and set to 0
-		cur.execute("SELECT * FROM " + TABLE_NAME + "WHERE deck_name = ? AND study_date = ?", (deckName, prevDate))
+		cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? AND study_date = ?', (deckName, prevDate))
 		row = str(cur.fetchone())
 
 		# We found a blank study day!
 		if (row == 'None'):
 			# TODO: Take this out when done:  showInfo("Found none")
 			# Store this date into the DB with value of 0
-			cur.execute('INSERT INTO ' + TABLE_NAME + ' (rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, prevDate, 0))
+			cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName, prevDate, 0))
 		#else:
 			# TODO: Take this out when done: showInfo(row)
 
@@ -214,7 +214,7 @@ def myTodayStats(self, _old):
 			prevDate = str(prevDate.year) + "-" + str(prevDate.strftime('%m')) + "-" + str(prevDate.strftime('%d'))
 
 		deckName = formatDeckNameForDatabase(deckName)
-		cur.execute("SELECT * FROM (SELECT study_date, study_complete FROM " + TABLE_NAME + " WHERE deck_name = ? ORDER BY study_date DESC LIMIT 7) ORDER BY study_date", (deckName,))
+		cur.execute('SELECT * FROM (SELECT study_date, study_complete FROM ' + TABLE_NAME + ' WHERE deck_name = ? ORDER BY study_date DESC LIMIT 7) ORDER BY study_date', (deckName,))
 
 		for row in cur:
 			studyCompletion = "null"
@@ -264,11 +264,11 @@ def myFinishedMsg(self, _old):
 	con = sqlite.connect(DATABASE_NAME)
 	cur = con.cursor()
 	# TODO: Refactor so that DB creation is in a sep. method
-	cur.execute("CREATE TABLE IF NOT EXISTS " + TABLE_NAME + "(ROWID INTEGER PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, study_complete INTEGER NOT NULL)")
+	cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, study_complete INTEGER NOT NULL)')
 
 	# Check if we have already made a log of today's session, and whether it was 100%
 	# TODO: Refactor so that this is a sep. method
-	cur.execute("SELECT * FROM " + TABLE_NAME + " WHERE deck_name = ? AND study_date = ?", (deckName, currDate))
+	cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? AND study_date = ?', (deckName, currDate))
 	row = cur.fetchone()
 
 	# We found a blank study day!
