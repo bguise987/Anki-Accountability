@@ -173,7 +173,7 @@ def myTodayStats(self, _old):
                     "-" + str(prevDate.strftime('%d')))
 
         # 	If there is no entry, create one and set to 0
-        cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND
+        cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
                     study_date=?', (deckName, prevDate))
         row = str(cur.fetchone())
 
