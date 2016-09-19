@@ -387,3 +387,10 @@ except AttributeError:
     showInfo("Error running Anki Accountability. \
     Could not wrap the closeEvent method.")
     pass
+
+# TODO: Complete DB handling code
+# Create (if not exists) DB versioning table
+# Check version of DB in current installation
+# TODO: THIS is where we should be creating the add on DB, not throughout code
+# Create the Anki Accountability DB (if not exists)
+# Update current Anki Accountability DB if necessary
