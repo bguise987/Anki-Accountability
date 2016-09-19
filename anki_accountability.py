@@ -38,6 +38,7 @@ from aqt.qt import *
 # Some constants
 DATABASE_NAME = 'anki_accountability_study.db'
 TABLE_NAME = 'anki_accountability'
+DB_VER_TABLE = 'db_version'
 
 
 def requestInfo():
@@ -390,6 +391,12 @@ except AttributeError:
 
 # TODO: Complete DB handling code
 # Create (if not exists) DB versioning table
+con = sqlite.connect(DATABASE_NAME)
+cur = con.cursor()
+cur.execute('CREATE TABLE IF NOT EXISTS ' + DB_VER_TABLE + '(ROWID INTEGER \
+PRIMARY KEY, major_version INTEGER NOT NULL, minor_version INTEGER NOT NULL)')
+con.commit()
+con.close()
 # Check version of DB in current installation
 # TODO: THIS is where we should be creating the add on DB, not throughout code
 # Create the Anki Accountability DB (if not exists)
