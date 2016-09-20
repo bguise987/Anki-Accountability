@@ -168,10 +168,12 @@ def myTodayStats(self, _old):
     # Get the current date
     now = dt.datetime.now()
 
-    # Grab the current deckName
+    # Grab the current deckName and cardCount
     deckId = mw.col.decks.selected()
     deckName = mw.col.decks.name(deckId)
     deckName = formatDeckNameForDatabase(deckName)
+    cardCount = mw.col.db.scalar("select count() from cards where did \
+                                    is %s" % deckId)
 
     # Go to the last 7 days and check if there's a DB entry
     for i in range(1, 7):
@@ -189,8 +191,8 @@ def myTodayStats(self, _old):
             # TODO: Take this out when done:  showInfo("Found none")
             # Store this date into the DB with value of 0
             cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
-                        study_date, study_complete) VALUES(NULL, ?, ?, ?)',
-                        (deckName, prevDate, 0))
+                        study_date, study_complete, card_count) VALUES(NULL, \
+                        ?, ?, ?, ?)', (deckName, prevDate, 0, cardCount))
 
     con.commit()
     con.close()
@@ -236,9 +238,9 @@ def myTodayStats(self, _old):
                         str(prevDate.strftime('%d')))
 
         deckName = formatDeckNameForDatabase(deckName)
-        cur.execute('SELECT * FROM (SELECT study_date, study_complete FROM ' +
-                    TABLE_NAME + ' WHERE deck_name=? ORDER BY study_date \
-                    DESC LIMIT 7) ORDER BY study_date', (deckName,))
+        cur.execute('SELECT * FROM (SELECT study_date, study_complete, \
+            card_count FROM ' + TABLE_NAME + ' WHERE deck_name=? ORDER BY \
+            study_date DESC LIMIT 7) ORDER BY study_date', (deckName,))
 
         for row in cur:
             studyCompletion = "null"
@@ -249,7 +251,8 @@ def myTodayStats(self, _old):
 
             txt += ("<div>" + row['study_date'] +
                     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + studyCompletion +
-                    "</div>")
+                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+                    str(row['card_count']) + " Cards in deck</div>")
 
         con.close()
 
@@ -281,6 +284,8 @@ def myFinishedMsg(self, _old):
     deckId = mw.col.decks.selected()
     deckName = mw.col.decks.name(deckId)
     deckName = formatDeckNameForDatabase(deckName)
+    cardCount = mw.col.db.scalar("select count() from cards where did \
+                                    is %s" % deckId)
 
     # Check the database version, update if necessary
     checkDBVersion()
@@ -290,7 +295,7 @@ def myFinishedMsg(self, _old):
     # TODO: Refactor so that DB creation is in a sep. method
     cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER \
     PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, \
-    study_complete INTEGER NOT NULL)')
+    study_complete INTEGER NOT NULL, card_count INTEGER NOT NULL)')
 
     # Check if we have already made a log of today's session
     # and whether it was 100%
@@ -305,17 +310,16 @@ def myFinishedMsg(self, _old):
         studyPercent = 100
         # TODO: Refactor so that this is a separate method
         cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
-        study_date, study_complete) VALUES(NULL, ?, ?, ?)', (deckName,
-                                                             currDate,
-                                                             studyPercent))
+            study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
+                    (deckName, currDate, studyPercent, cardCount))
         con.commit()
     else:
         # Not a blank study day--check if study_complete is 100%
         if (row[3] != 100):
             rowId = row['ROWID']
             cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
-                        ' VALUES(?, ?, ?, ?)', (rowId, deckName, currDate,
-                                                studyPercent))
+                        ' VALUES(?, ?, ?, ?, ?)', (rowId, deckName, currDate,
+                                                   studyPercent, cardCount))
 
     con.close()
 
