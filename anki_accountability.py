@@ -41,6 +41,7 @@ TABLE_NAME = 'anki_accountability'
 DB_VER_TABLE = 'db_version'
 MAJOR_VERSION = 1
 MINOR_VERSION = 0
+TIMESTAMP_FORMAT_STR = '%Y-%m-%d'
 
 
 def requestInfo():
@@ -270,23 +271,11 @@ def myFinishedMsg(self, _old):
          ~/Documents/Anki/User 1/collection.media directory
          Store date in YYYY-MM-DD format so SQL commands can help us eliminate
          old dates """
-    # Log the progress
-    # TODO: Remove this informational message
-    # showInfo("Study session complete! Now logging...")
 
     # Grab the current date, split out the parts we want
     now = dt.datetime.now()
-    year = now.year
-    # .strftime('%m') and .strftime('%d') used so that month is double
-    # digit for SQLite to properly process the date
-    month = now.strftime('%m')
-    day = now.strftime('%d')
-    # TODO: Possible to probably do this formatting in one line.
-    # See the datetime.datetime API for details
-
-    # Merge these values together so they can be stored in the database
-    # TODO: Refactor into sep. method
-    currDate = str(year) + "-" + str(month) + "-" + str(day)
+    # Format string used so date conforms to SQLite timestamp format
+    currDate = now.strftime(TIMESTAMP_FORMAT_STR)
 
     # Get the deck name
     deckId = mw.col.decks.selected()
