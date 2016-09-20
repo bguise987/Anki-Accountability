@@ -39,6 +39,8 @@ from aqt.qt import *
 DATABASE_NAME = 'anki_accountability_study.db'
 TABLE_NAME = 'anki_accountability'
 DB_VER_TABLE = 'db_version'
+MAJOR_VERSION = 1
+MINOR_VERSION = 0
 
 
 def requestInfo():
@@ -154,6 +156,9 @@ def myTodayStats(self, _old):
         and then run the original as well """
 
     txt = _old(self)
+
+    # Check the database version, update if necessary
+    checkDBVersion()
 
     # DB connection code
     con = sqlite.connect(DATABASE_NAME)
@@ -288,6 +293,9 @@ def myFinishedMsg(self, _old):
     deckName = mw.col.decks.name(deckId)
     deckName = formatDeckNameForDatabase(deckName)
 
+    # Check the database version, update if necessary
+    checkDBVersion()
+
     con = sqlite.connect(DATABASE_NAME)
     cur = con.cursor()
     # TODO: Refactor so that DB creation is in a sep. method
@@ -389,15 +397,33 @@ except AttributeError:
     Could not wrap the closeEvent method.")
     pass
 
+# ****************************************************************************
+# Database handling functions
+# ****************************************************************************
+
 # TODO: Complete DB handling code
-# Create (if not exists) DB versioning table
-con = sqlite.connect(DATABASE_NAME)
-cur = con.cursor()
-cur.execute('CREATE TABLE IF NOT EXISTS ' + DB_VER_TABLE + '(ROWID INTEGER \
-PRIMARY KEY, major_version INTEGER NOT NULL, minor_version INTEGER NOT NULL)')
-con.commit()
-con.close()
-# Check version of DB in current installation
-# TODO: THIS is where we should be creating the add on DB, not throughout code
-# Create the Anki Accountability DB (if not exists)
-# Update current Anki Accountability DB if necessary
+
+
+def checkDBVersion():
+    """Create (if not exists) DB versioning table"""
+    con = sqlite.connect(DATABASE_NAME)
+    cur = con.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS ' + DB_VER_TABLE + '(ROWID INTEGER \
+    PRIMARY KEY, major_version INTEGER NOT NULL, minor_version \
+    INTEGER NOT NULL)')
+
+    # 	If there is no entry, create one and set to current versioning
+    cur.execute('SELECT * FROM ' + DB_VER_TABLE)
+    row = str(cur.fetchone())
+
+    # We found a blank versioning table
+    if (row == 'None'):
+        cur.execute('INSERT INTO ' + DB_VER_TABLE + '(rowid, major_version, \
+        minor_version) VALUES(NULL, ?, ?)', (MAJOR_VERSION, MINOR_VERSION))
+        con.commit()
+
+    con.close()
+
+
+def createStudyTable():
+    """Create the table (and database) that will store study progress"""
