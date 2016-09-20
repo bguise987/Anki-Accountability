@@ -334,13 +334,6 @@ def myFinishedMsg(self, _old):
     _old(self)
 
 
-def myCloseEvent(self, _old):
-    showInfo("Successfully intercepted the shutdown of Anki!")
-
-    # Run the original method
-    _old(self)
-
-
 def displayPreview(recEmail, userEmail, userName):
     """ Get the number of cards in the current collection, which is stored in
          the main window """
@@ -388,14 +381,6 @@ except AttributeError:
     Could not wrap the finishedMsg method.")
     pass
 
-# Enable logging of partial study events by wrapping the close method
-try:
-    main.AnkiQt.closeEvent = wrap(main.AnkiQt.closeEvent,
-                                  myCloseEvent, "around")
-except AttributeError:
-    showInfo("Error running Anki Accountability. \
-    Could not wrap the closeEvent method.")
-    pass
 
 # ****************************************************************************
 # Database handling functions
