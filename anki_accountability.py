@@ -295,10 +295,7 @@ def myFinishedMsg(self, _old):
 
     con = sqlite.connect(DATABASE_NAME)
     cur = con.cursor()
-    # TODO: Refactor so that DB creation is in a sep. method
-    cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER \
-    PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, \
-    study_complete INTEGER NOT NULL, card_count INTEGER NOT NULL)')
+    createStudyTable(cur)
 
     # Check if we have already made a log of today's session
     # and whether it was 100%
