@@ -181,6 +181,9 @@ def myTodayStats(self, _old):
         prevDate = (str(prevDate.year) + "-" + str(prevDate.strftime('%m')) +
                     "-" + str(prevDate.strftime('%d')))
 
+        # Create the study table (if this is not done, Anki will crash)
+        createStudyTable(cur)
+
         # 	If there is no entry, create one and set to 0
         cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
                     study_date=?', (deckName, prevDate))
@@ -383,7 +386,7 @@ except AttributeError:
 
 
 def checkDBVersion():
-    """Create (if not exists) DB versioning table"""
+    """ Create (if not exists) DB versioning table """
     con = sqlite.connect(DATABASE_NAME)
     cur = con.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS ' + DB_VER_TABLE + '(ROWID INTEGER \
@@ -403,5 +406,8 @@ def checkDBVersion():
     con.close()
 
 
-def createStudyTable():
-    """Create the table (and database) that will store study progress"""
+def createStudyTable(cur):
+    """ Create the table (and database) that will store study progress """
+    cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER \
+    PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, \
+    study_complete INTEGER NOT NULL, card_count INTEGER NOT NULL)')
