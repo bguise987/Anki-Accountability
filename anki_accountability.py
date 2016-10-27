@@ -320,6 +320,7 @@ def myFinishedMsg(self, _old):
             cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
                         ' VALUES(?, ?, ?, ?, ?)', (rowId, deckName, currDate,
                                                    studyPercent, cardCount))
+            con.commit()
 
     con.close()
 
