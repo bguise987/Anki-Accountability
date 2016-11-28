@@ -283,8 +283,23 @@ def myFinishedMsg(self, _old):
     # Format string used so date conforms to SQLite timestamp format
     currDate = now.strftime(TIMESTAMP_FORMAT_STR)
 
-    # Get the deck name
+    # Get the deck ID - this will let us look up other information
     deckId = mw.col.decks.selected()
+
+    # Get the parents array
+    parents = mw.col.decks.parents(deckId)
+    # If len(parents) is 0, we have the parent deck. Get children and record
+    # studying complete for parent and child decks
+    if (len(parents) == 0):
+        showInfo("We found a parent deck!")
+
+    # If len(parents) is NOT 0, then we have a child deck. Check the status of
+    # the parent deck. If studying is NOT complete for the parent, do nothing.
+    # If studying IS complete for the parent, log the studying of this child
+    # deck as complete as well.
+    if (len(parents) != 0):
+        showInfo("We found a child deck!")
+
     deckName = mw.col.decks.name(deckId)
     deckName = formatDeckNameForDatabase(deckName)
     cardCount = mw.col.db.scalar("select count() from cards where did \
