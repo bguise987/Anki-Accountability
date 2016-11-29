@@ -288,10 +288,18 @@ def myFinishedMsg(self, _old):
 
     # Get the parents array
     parents = mw.col.decks.parents(deckId)
-    # If len(parents) is 0, we have the parent deck. Get children and record
-    # studying complete for parent and child decks
+
+    # If len(parents) is 0, we have the parent deck. Get children as
+    # (name, deckId) and record studying complete for parent and child decks
     if (len(parents) == 0):
         showInfo("We found a parent deck!")
+        children = mw.col.decks.children(deckId)
+        for child, childDeckId in children:
+            fullChildName = mw.col.decks.name(childDeckId)
+            # Split the text by :: since that's how Anki separates
+            # parent::child, then only display the child name (childName[1])
+            childName = fullChildName.split("::")
+            showInfo("Here's a child: " + childName[1])
 
     # If len(parents) is NOT 0, then we have a child deck. Check the status of
     # the parent deck. If studying is NOT complete for the parent, do nothing.
@@ -299,6 +307,9 @@ def myFinishedMsg(self, _old):
     # deck as complete as well.
     if (len(parents) != 0):
         showInfo("We found a child deck!")
+        parents = mw.col.decks.parents(deckId)
+        for parent in parents:
+            showInfo("Here's the parent: " + str(parent))
 
     deckName = mw.col.decks.name(deckId)
     deckName = formatDeckNameForDatabase(deckName)
