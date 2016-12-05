@@ -289,17 +289,87 @@ def myFinishedMsg(self, _old):
     # Get the parents array
     parents = mw.col.decks.parents(deckId)
 
+    # Check the database version, update if necessary
+    checkDBVersion()
+
+    con = sqlite.connect(DATABASE_NAME)
+    cur = con.cursor()
+    createStudyTable(cur)
+
     # If len(parents) is 0, we have the parent deck. Get children as
     # (name, deckId) and record studying complete for parent and child decks
     if (len(parents) == 0):
         showInfo("We found a parent deck!")
+
+        deckName = mw.col.decks.name(deckId)
+        deckName = formatDeckNameForDatabase(deckName)
+        parentDeckName = deckName
+
+        # Store the current date into the database and 100% complete
+        studyPercent = 100
+        cardCount = mw.col.db.scalar("select count() from cards where did \
+                                        is %s" % deckId)
+
+        cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
+            study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
+                    (deckName, currDate, studyPercent, cardCount))
+        con.commit()
+
         children = mw.col.decks.children(deckId)
+        # As we iterate through child decks, increment so we can store total
+        # card count for the parent deck
+        parentCardCount = 0
         for child, childDeckId in children:
             fullChildName = mw.col.decks.name(childDeckId)
             # Split the text by :: since that's how Anki separates
             # parent::child, then only display the child name (childName[1])
             childName = fullChildName.split("::")
             showInfo("Here's a child: " + childName[1])
+
+            deckName = childName[1]
+            deckName = formatDeckNameForDatabase(deckName)
+            cardCount = mw.col.db.scalar("select count() from cards where did \
+                                            is %s" % childDeckId)
+            parentCardCount = parentCardCount + cardCount
+            # Store the current date into the database and 100% complete
+            studyPercent = 100
+
+            # Check if we have already made a log of today's session
+            # and whether it was 100%
+            # TODO: Refactor so that this is a sep. method
+            cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
+            AND study_date = ?', (deckName, currDate))
+            row = cur.fetchone()
+
+            # We found a blank study day!
+            if (row is None):
+
+                # TODO: Refactor so that this is a separate method
+                cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
+                study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, \
+                ?)', (deckName, currDate, studyPercent, cardCount))
+                con.commit()
+            else:
+                # Not a blank study day--check if study_complete is 100%
+                if (row[3] != 100):
+                    rowId = row[0]
+                    cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
+                                ' VALUES(?, ?, ?, ?, ?)',
+                                (rowId, deckName, currDate, studyPercent,
+                                 cardCount))
+                    con.commit()
+
+        # Store the parent card count by selecting the row and updating
+        cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
+        AND study_date = ?', (parentDeckName, currDate))
+        row = cur.fetchone()
+        rowId = row[0]
+        studyPercent = row[3]
+        cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + '(rowid, \
+            deck_name, study_date, study_complete, card_count) \
+            VALUES(NULL, ?, ?, ?, ?)', (parentDeckName, currDate, studyPercent,
+                                        parentCardCount))
+        con.commit()
 
     # If len(parents) is NOT 0, then we have a child deck. Check the status of
     # the parent deck. If studying is NOT complete for the parent, do nothing.
@@ -308,47 +378,91 @@ def myFinishedMsg(self, _old):
     if (len(parents) != 0):
         showInfo("We found a child deck!")
         parents = mw.col.decks.parents(deckId)
+        # We use a for loop here so that the logic holds for decks that have
+        # a parent and a grandparent
         for parent in parents:
-            showInfo("Here's the parent: " + str(parent))
+            showInfo("Here's the parent deck name: " + parent['name'])
+            parentDeckName = formatDeckNameForDatabase(parent['name'])
+            cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
+            AND study_date = ?', (parentDeckName, currDate))
+            row = cur.fetchone()
 
-    deckName = mw.col.decks.name(deckId)
-    deckName = formatDeckNameForDatabase(deckName)
-    cardCount = mw.col.db.scalar("select count() from cards where did \
-                                    is %s" % deckId)
+            # Check if parent deck studying is complete, if so, log child study
+            if (row[3] == 100):
+                showInfo("Parent deck studying is complete!")
+
+                cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
+                AND study_date = ?', (deckName, currDate))
+                row = cur.fetchone()
+
+                # We found a blank study day!
+                if (row is None):
+
+                    # TODO: Refactor so that this is a separate method
+                    cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
+                    study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, \
+                    ?)', (deckName, currDate, studyPercent, cardCount))
+                    con.commit()
+                else:
+                    # Not a blank study day--check if study_complete is 100%
+                    if (row[3] != 100):
+                        rowId = row[0]
+                        cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
+                                    ' VALUES(?, ?, ?, ?, ?)',
+                                    (rowId, deckName, currDate, studyPercent,
+                                     cardCount))
+                        con.commit()
+            else:
+                showInfo("Parent deck studying was NOT complete :(")
+
+    # TODO: actually fill out DB insert and update items for this
+
+    # ************* ORIGINAL DATABASE CODE HERE ******************
+
+    # deckName = mw.col.decks.name(deckId)
+    # deckName = formatDeckNameForDatabase(deckName)
+    # cardCount = mw.col.db.scalar("select count() from cards where did \
+    #                                 is %s" % deckId)
 
     # Check the database version, update if necessary
-    checkDBVersion()
-
-    con = sqlite.connect(DATABASE_NAME)
-    cur = con.cursor()
-    createStudyTable(cur)
-
-    # Check if we have already made a log of today's session
-    # and whether it was 100%
-    # TODO: Refactor so that this is a sep. method
-    cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? AND \
-    study_date = ?', (deckName, currDate))
-    row = cur.fetchone()
-
-    # We found a blank study day!
-    if (row is None):
-        # Store the current date into the database and 100% complete
-        studyPercent = 100
-        # TODO: Refactor so that this is a separate method
-        cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
-            study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
-                    (deckName, currDate, studyPercent, cardCount))
-        con.commit()
-    else:
-        # Not a blank study day--check if study_complete is 100%
-        if (row[3] != 100):
-            rowId = row['ROWID']
-            cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
-                        ' VALUES(?, ?, ?, ?, ?)', (rowId, deckName, currDate,
-                                                   studyPercent, cardCount))
-            con.commit()
-
-    con.close()
+    # checkDBVersion()
+    #
+    # con = sqlite.connect(DATABASE_NAME)
+    # cur = con.cursor()
+    # createStudyTable(cur)
+    #
+    #
+    #
+    #
+    #
+    #
+    # # Check if we have already made a log of today's session
+    # # and whether it was 100%
+    # # TODO: Refactor so that this is a sep. method
+    # cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? AND \
+    # study_date = ?', (deckName, currDate))
+    # row = cur.fetchone()
+    #
+    # # We found a blank study day!
+    # if (row is None):
+    #     # Store the current date into the database and 100% complete
+    #     studyPercent = 100
+    #     # TODO: Refactor so that this is a separate method
+    #     cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
+    #         study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
+    #                 (deckName, currDate, studyPercent, cardCount))
+    #     con.commit()
+    # else:
+    #     # Not a blank study day--check if study_complete is 100%
+    #     if (row[3] != 100):
+    # TODO: CHeck that indexing this row by a Str is allowed
+    #         rowId = row['ROWID']
+    #         cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
+    #                     ' VALUES(?, ?, ?, ?, ?)', (rowId, deckName, currDate,
+    #                                                studyPercent, cardCount))
+    #         con.commit()
+    #
+    # con.close()
 
     # Run the original method
     _old(self)
