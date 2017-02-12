@@ -45,7 +45,8 @@ TIMESTAMP_FORMAT_STR = '%Y-%m-%d'
 
 
 def requestInfo():
-    """Show a message box and get the user's name and email address
+    """Show a message box and get the user's name, email address, and
+    preference for how many days of study to show in the stats image.
     These pieces of information will be stored in the Anki dictionary
     and should sync between installations of Anki """
 
@@ -59,6 +60,8 @@ def requestInfo():
     nameLabel.setTextFormat(1)
     emailLabel = QLabel("<b>Your email address: </b>")
     emailLabel.setTextFormat(1)
+    numDaysLabel = QLabel("<b>Study days to display: </b>")
+    numDaysLabel.setTextFormat(1)
     descLabel = QLabel("Please enter your name and email address so we can \
     place this information on the statistics image.\nThis will put a record \
     of your user information on the statistics page rather than having your \
@@ -71,11 +74,14 @@ def requestInfo():
     nameText.setFixedSize(300, 25)
     emailText = QLineEdit()
     emailText.setFixedSize(300, 25)
+    numDaysText = QLineEdit()
+    numDaysText.setFixedSize(100, 25)
 
     # Button to enter data
     confirmButton = QPushButton("Ok")
     confirmButton.clicked.connect(
-        lambda: storeUserInfo(confirmButton, nameText, emailText, widget))
+        lambda: storeUserInfo(confirmButton, nameText, emailText, numDaysText,
+                              widget))
     confirmButton.setFixedWidth(80)
 
     # Layout - create a main layout and then separate it into top and bottom
@@ -88,7 +94,9 @@ def requestInfo():
     bottomLayout.addWidget(nameText, 0, 1)
     bottomLayout.addWidget(emailLabel, 1, 0)
     bottomLayout.addWidget(emailText, 1, 1)
-    bottomLayout.addWidget(confirmButton, 2, 1)
+    bottomLayout.addWidget(numDaysLabel, 2, 0)
+    bottomLayout.addWidget(numDaysText, 2, 1)
+    bottomLayout.addWidget(confirmButton, 3, 1)
 
     # Add top and bottom layout items into the main layout
     mainLayout.addWidget(descLabel)
@@ -96,7 +104,8 @@ def requestInfo():
 
     # Set tab order for quick data entry
     widget.setTabOrder(nameText, emailText)
-    widget.setTabOrder(emailText, confirmButton)
+    widget.setTabOrder(emailText, numDaysText)
+    widget.setTabOrder(numDaysText, confirmButton)
 
     # If the user has given us information before, let's try and access it now
     checkFirstTime = None
@@ -111,12 +120,14 @@ def requestInfo():
         nameText.setText(userName)
         userEmail = mw.col.conf['email_addr_anki_actbil']
         emailText.setText(userEmail)
+        numDays = mw.col.conf['num_days_show_anki_actbil']
+        numDaysText.setText(numDays)
 
     # Show the window
     widget.show()
 
 
-def storeUserInfo(button, nameField, emailField, dialogBox):
+def storeUserInfo(button, nameField, emailField, numDaysField, dialogBox):
     """ Called from the dialog box created by the requestInfo() method.
          This will check to see if the user has a profile already in the
         mw.col dictionary and then store their information.
@@ -130,6 +141,9 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
 
     # Get the user's email address
     enteredEmail = emailField.text()
+
+    # Get the user's preference for number of study days to display
+    enteredNumDays = int(numDaysField.text())
 
     # Check to see if the user has a profile already
     try:
@@ -145,6 +159,7 @@ def storeUserInfo(button, nameField, emailField, dialogBox):
     mw.col.conf['first_name_anki_actbil'] = firstName
     mw.col.conf['last_name_anki_actbil'] = lastName
     mw.col.conf['email_addr_anki_actbil'] = enteredEmail
+    mw.col.conf['num_days_show_anki_actbil'] = enteredNumDays
 
     # Let the collection know that we made a conf change
     mw.col.setMod()
