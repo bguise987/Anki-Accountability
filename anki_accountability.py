@@ -191,11 +191,8 @@ def myTodayStats(self, _old):
 
         # We found a blank study day!
         if (row == 'None'):
-            # TODO: Take this out when done:  showInfo("Found none")
             # Store this date into the DB with value of 0
-            cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
-                        study_date, study_complete, card_count) VALUES(NULL, \
-                        ?, ?, ?, ?)', (deckName, prevDate, 0, cardCount))
+            logStudyToDatabase(cur, deckName, prevDate, 0, cardCount)
 
     con.commit()
     con.close()
@@ -310,7 +307,7 @@ def myFinishedMsg(self, _old):
         cardCount = mw.col.db.scalar("select count() from cards where did \
                                         is %s" % deckId)
 
-        logCompleteStudy(cur, deckName, currDate, studyPercent, cardCount)
+        logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount)
         con.commit()
 
         children = mw.col.decks.children(deckId)
@@ -341,7 +338,7 @@ def myFinishedMsg(self, _old):
 
             # We found a blank study day!
             if (row is None):
-                logCompleteStudy(cur, deckName, currDate, studyPercent,
+                logStudyToDatabase(cur, deckName, currDate, studyPercent,
                                  cardCount)
                 con.commit()
             else:
@@ -392,7 +389,7 @@ def myFinishedMsg(self, _old):
 
                 # We found a blank study day!
                 if (row is None):
-                    logCompleteStudy(cur, deckName, currDate, studyPercent,
+                    logStudyToDatabase(cur, deckName, currDate, studyPercent,
                                      cardCount)
                     con.commit()
                 else:
@@ -467,7 +464,7 @@ except AttributeError:
 
 # TODO: Complete DB handling code
 # Operations code
-def logCompleteStudy(cur, deckName, currDate, studyPercent, cardCount):
+def logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount):
     """Use provided cursor to log a successful study session"""
     cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, \
         study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)', 
