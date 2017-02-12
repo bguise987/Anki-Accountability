@@ -195,33 +195,34 @@ def myTodayStats(self, _old):
     cardCount = mw.col.db.scalar("select count() from cards where did \
                                     is %s" % deckId)
 
-    # Go to the last 7 days and check if there's a DB entry
-    for i in range(1, 7):
-        prevDate = now - timedelta(days=i)
-        prevDate = (str(prevDate.year) + "-" + str(prevDate.strftime('%m')) +
-                    "-" + str(prevDate.strftime('%d')))
-
-        # Create the study table (if this is not done, Anki will crash)
-        createStudyTable(cur)
-
-        # 	If there is no entry, create one and set to 0
-        cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
-                    study_date=?', (deckName, prevDate))
-        row = str(cur.fetchone())
-
-        # We found a blank study day!
-        if (row == 'None'):
-            # Store this date into the DB with value of 0
-            logStudyToDatabase(cur, deckName, prevDate, 0, cardCount)
-
-    con.commit()
-    con.close()
-
     try:
         # Extract user info from use mw.col.conf
         userName = (mw.col.conf['first_name_anki_actbil'] + " " +
                     mw.col.conf['last_name_anki_actbil'])
         userEmail = mw.col.conf['email_addr_anki_actbil']
+        numDays = int(mw.col.conf['num_days_show_anki_actbil'])
+
+        # Go to the last {{numDays}} days and check if there's a DB entry
+        for i in range(1, numDays):
+            prevDate = now - timedelta(days=i)
+            prevDate = (str(prevDate.year) + "-" + str(prevDate.strftime('%m')) +
+                        "-" + str(prevDate.strftime('%d')))
+
+            # Create the study table (if this is not done, Anki will crash)
+            createStudyTable(cur)
+
+            # 	If there is no entry, create one and set to 0
+            cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
+                        study_date=?', (deckName, prevDate))
+            row = str(cur.fetchone())
+
+            # We found a blank study day!
+            if (row == 'None'):
+                # Store this date into the DB with value of 0
+                logStudyToDatabase(cur, deckName, prevDate, 0, cardCount)
+
+        con.commit()
+        con.close()
 
         # Grab data on user's progress
         # Some of this code is taken from stats.py within anki
@@ -244,14 +245,14 @@ def myTodayStats(self, _old):
 
         txt += "<div><b>Deck name: " + deckName + "</b></div>"
         txt += "<div><b>Total cards in deck: </b>" + str(cardCount) + "</div>"
-        txt += "<div><b>Studying last 7 days: </b></div>"
+        txt += "<div><b>Studying last " + str(numDays) + " days: </b></div>"
 
         # Grab DB in such a way we can get cols by name
         con = sqlite.connect(DATABASE_NAME)
         con.row_factory = sqlite.Row
         cur = con.cursor()
 
-        for i in range(7, 1, -1):
+        for i in range(numDays, 1, -1):
             prevDate = now - timedelta(days=i)
             prevDate = (str(prevDate.year) + "-" +
                         str(prevDate.strftime('%m')) + "-" +
@@ -260,7 +261,7 @@ def myTodayStats(self, _old):
         deckName = formatDeckNameForDatabase(deckName)
         cur.execute('SELECT * FROM (SELECT study_date, study_complete, \
             card_count FROM ' + TABLE_NAME + ' WHERE deck_name=? ORDER BY \
-            study_date DESC LIMIT 7) ORDER BY study_date', (deckName,))
+            study_date DESC LIMIT ' + str(numDays) + ') ORDER BY study_date', (deckName,))
 
         for row in cur:
             studyCompletion = "null"
