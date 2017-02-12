@@ -415,55 +415,8 @@ def myFinishedMsg(self, _old):
             else:
                 showInfo("Parent deck studying was NOT complete :(")
 
-    # TODO: actually fill out DB insert and update items for this
-
-    # ************* ORIGINAL DATABASE CODE HERE ******************
-
-    # deckName = mw.col.decks.name(deckId)
-    # deckName = formatDeckNameForDatabase(deckName)
-    # cardCount = mw.col.db.scalar("select count() from cards where did \
-    #                                 is %s" % deckId)
-
-    # Check the database version, update if necessary
-    # checkDBVersion()
-    #
-    # con = sqlite.connect(DATABASE_NAME)
-    # cur = con.cursor()
-    # createStudyTable(cur)
-    #
-    #
-    #
-    #
-    #
-    #
-    # # Check if we have already made a log of today's session
-    # # and whether it was 100%
-    # # TODO: Refactor so that this is a sep. method
-    # cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? AND \
-    # study_date = ?', (deckName, currDate))
-    # row = cur.fetchone()
-    #
-    # # We found a blank study day!
-    # if (row is None):
-    #     # Store the current date into the database and 100% complete
-    #     studyPercent = 100
-    #     # TODO: Refactor so that this is a separate method
-    #     cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
-    #         study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
-    #                 (deckName, currDate, studyPercent, cardCount))
-    #     con.commit()
-    # else:
-    #     # Not a blank study day--check if study_complete is 100%
-    #     if (row[3] != 100):
-    # TODO: CHeck that indexing this row by a Str is allowed
-    #         rowId = row['ROWID']
-    #         cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
-    #                     ' VALUES(?, ?, ?, ?, ?)', (rowId, deckName, currDate,
-    #                                                studyPercent, cardCount))
-    #         con.commit()
-    #
-    # con.close()
-
+    # Close the DB connection
+    con.close()
     # Run the original method
     _old(self)
 
