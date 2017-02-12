@@ -310,9 +310,7 @@ def myFinishedMsg(self, _old):
         cardCount = mw.col.db.scalar("select count() from cards where did \
                                         is %s" % deckId)
 
-        cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
-            study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
-                    (deckName, currDate, studyPercent, cardCount))
+        logCompleteStudy(cur, deckName, currDate, studyPercent, cardCount)
         con.commit()
 
         children = mw.col.decks.children(deckId)
@@ -343,11 +341,8 @@ def myFinishedMsg(self, _old):
 
             # We found a blank study day!
             if (row is None):
-
-                # TODO: Refactor so that this is a separate method
-                cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
-                study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, \
-                ?)', (deckName, currDate, studyPercent, cardCount))
+                logCompleteStudy(cur, deckName, currDate, studyPercent,
+                                 cardCount)
                 con.commit()
             else:
                 # Not a blank study day--check if study_complete is 100%
@@ -397,11 +392,8 @@ def myFinishedMsg(self, _old):
 
                 # We found a blank study day!
                 if (row is None):
-
-                    # TODO: Refactor so that this is a separate method
-                    cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, \
-                    study_date, study_complete, card_count) VALUES(NULL, ?, ?, ?, \
-                    ?)', (deckName, currDate, studyPercent, cardCount))
+                    logCompleteStudy(cur, deckName, currDate, studyPercent,
+                                     cardCount)
                     con.commit()
                 else:
                     # Not a blank study day--check if study_complete is 100%
@@ -470,10 +462,18 @@ except AttributeError:
 
 
 # ****************************************************************************
-# Database handling functions
+# Database handling functions (for maintenance and operations)
 # ****************************************************************************
 
 # TODO: Complete DB handling code
+# Operations code
+def logCompleteStudy(cur, deckName, currDate, studyPercent, cardCount):
+    """Use provided cursor to log a successful study session"""
+    cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, \
+        study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)', 
+        (deckName, currDate, studyPercent, cardCount))
+
+# Maintenance code
 
 
 def checkDBVersion():
@@ -500,5 +500,5 @@ def checkDBVersion():
 def createStudyTable(cur):
     """ Create the table (and database) that will store study progress """
     cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER \
-    PRIMARY KEY, deck_name CHAR(30) NOT NULL, study_date CHAR(15) NOT NULL, \
+    PRIMARY KEY, deck_name CHAR(75) NOT NULL, study_date CHAR(15) NOT NULL, \
     study_complete INTEGER NOT NULL, card_count INTEGER NOT NULL)')
