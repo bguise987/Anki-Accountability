@@ -108,11 +108,16 @@ def requestInfo():
     widget.setTabOrder(numDaysText, confirmButton)
 
     # If the user has given us information before, let's try and access it now
+    # We can also look for other values that may not have been present in initial
+    # versions of the add on.
     checkFirstTime = None
+    numDays = None
     try:
         checkFirstTime = mw.col.conf['exist_prof_anki_actbil']
+        numDays = mw.col.conf['num_days_show_anki_actbil']
     except KeyError:
         mw.col.conf['exist_prof_anki_actbil'] = False
+        mw.col.conf['num_days_show_anki_actbil'] = 7
 
     if checkFirstTime is True:
         userName = (mw.col.conf['first_name_anki_actbil'] +
@@ -121,7 +126,7 @@ def requestInfo():
         userEmail = mw.col.conf['email_addr_anki_actbil']
         emailText.setText(userEmail)
         numDays = mw.col.conf['num_days_show_anki_actbil']
-        numDaysText.setText(numDays)
+        numDaysText.setText(str(numDays))
 
     # Show the window
     widget.show()
