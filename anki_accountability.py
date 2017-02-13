@@ -148,28 +148,36 @@ def storeUserInfo(button, nameField, emailField, numDaysField, dialogBox):
     enteredEmail = emailField.text()
 
     # Get the user's preference for number of study days to display
-    enteredNumDays = int(numDaysField.text())
-
-    # Check to see if the user has a profile already
     try:
-        checkFirstTime = mw.col.conf['exist_prof_anki_actbil']
-    except KeyError:
-        mw.col.conf['exist_prof_anki_actbil'] = False
+        enteredNumDays = int(numDaysField.text())
 
-    # Store information to mw.col.conf, as per add on writing guide
-    # Note: We don't check to see if a previous profile exists. This allows the
-    # user to change his/her email address or name if a previous error was
-    # made.
-    mw.col.conf['exist_prof_anki_actbil'] = True
-    mw.col.conf['first_name_anki_actbil'] = firstName
-    mw.col.conf['last_name_anki_actbil'] = lastName
-    mw.col.conf['email_addr_anki_actbil'] = enteredEmail
-    mw.col.conf['num_days_show_anki_actbil'] = enteredNumDays
+        if enteredNumDays < 0:
+            showInfo("Please enter a positive integer for this value!")
+        else:
+            # Check to see if the user has a profile already
+            try:
+                checkFirstTime = mw.col.conf['exist_prof_anki_actbil']
+            except KeyError:
+                mw.col.conf['exist_prof_anki_actbil'] = False
 
-    # Let the collection know that we made a conf change
-    mw.col.setMod()
+            # Store information to mw.col.conf, as per add on writing guide
+            # Note: We don't check to see if a previous profile exists. This allows the
+            # user to change his/her email address or name if a previous error was
+            # made.
+            mw.col.conf['exist_prof_anki_actbil'] = True
+            mw.col.conf['first_name_anki_actbil'] = firstName
+            mw.col.conf['last_name_anki_actbil'] = lastName
+            mw.col.conf['email_addr_anki_actbil'] = enteredEmail
+            mw.col.conf['num_days_show_anki_actbil'] = enteredNumDays
 
-    dialogBox.hide()
+            # Let the collection know that we made a conf change
+            mw.col.setMod()
+
+            dialogBox.hide()
+
+    except ValueError:
+        showInfo("Please enter a number (like 7 or 10) and not text")
+        enteredNumDays = 0
 
 
 def myTodayStats(self, _old):
