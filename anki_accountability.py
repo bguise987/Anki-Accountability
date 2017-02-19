@@ -39,7 +39,8 @@ from aqt.qt import *
 DATABASE_NAME = 'anki_accountability_study.db'
 TABLE_NAME = 'anki_accountability'
 DB_VER_TABLE = 'db_version'
-MAJOR_VERSION = 1
+# Increment MAJOR_VERSION, but always leave MINOR_VERSION at 0
+MAJOR_VERSION = 2
 MINOR_VERSION = 0
 TIMESTAMP_FORMAT_STR = '%Y-%m-%d'
 
@@ -496,11 +497,19 @@ except AttributeError:
 def logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount):
     """Use provided cursor to log a successful study session"""
     cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, \
-        study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)', 
+        study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
         (deckName, currDate, studyPercent, cardCount))
 
-# Maintenance code
 
+# This will create the 2 study table
+def createStudyTable(cur):
+    """ Create the table (and database) that will store study progress """
+    cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER \
+    PRIMARY KEY, deck_name VARCHAR NOT NULL, study_date CHAR(15) NOT NULL, \
+    study_complete INTEGER NOT NULL, card_count INTEGER NOT NULL)')
+
+
+# Maintenance code
 
 def checkDBVersion():
     """ Create (if not exists) DB versioning table """
@@ -512,19 +521,31 @@ def checkDBVersion():
 
     # 	If there is no entry, create one and set to current versioning
     cur.execute('SELECT * FROM ' + DB_VER_TABLE)
-    row = str(cur.fetchone())
+    row = cur.fetchone()
 
     # We found a blank versioning table
-    if (row == 'None'):
+    if row == 'None':
         cur.execute('INSERT INTO ' + DB_VER_TABLE + '(rowid, major_version, \
         minor_version) VALUES(NULL, ?, ?)', (MAJOR_VERSION, MINOR_VERSION))
         con.commit()
+    else:
+        # This means there IS a version. Let's check it.
+        # Assemble the database version number.
+        currDbVer = row[1]
+        if currDbVer < 2:
+            showInfo("Upgrading the study log DB")
+            upgradeDatabase(currDbVer, MAJOR_VERSION, cur)
 
     con.close()
 
 
-def createStudyTable(cur):
-    """ Create the table (and database) that will store study progress """
-    cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER \
-    PRIMARY KEY, deck_name CHAR(75) NOT NULL, study_date CHAR(15) NOT NULL, \
-    study_complete INTEGER NOT NULL, card_count INTEGER NOT NULL)')
+# Upgrade the database from 1 to 2
+def upgradeDatabase(currVer, newVersion, cur):
+    cur.execute('ALTER TABLE anki_accountability RENAME TO \
+                _anki_accountability_old')
+    createStudyTable(cur)
+    cur.execute('INSERT INTO anki_accountability (ROWID, deck_name, study_date,\
+                study_complete, card_count) SELECT ROWID, deck_name,\
+                study_date, study_complete, card_count\
+                FROM _anki_accountability_old')
+    cur.execute('DROP TABLE _anki_accountability_old')
