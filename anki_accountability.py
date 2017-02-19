@@ -535,17 +535,20 @@ def checkDBVersion():
         if currDbVer < 2:
             showInfo("Upgrading the study log DB")
             upgradeDatabase(currDbVer, MAJOR_VERSION, cur)
+            con.commit()
 
     con.close()
 
 
 # Upgrade the database from 1 to 2
 def upgradeDatabase(currVer, newVersion, cur):
-    cur.execute('ALTER TABLE anki_accountability RENAME TO \
+    cur.execute('ALTER TABLE ' + TABLE_NAME + ' RENAME TO \
                 _anki_accountability_old')
     createStudyTable(cur)
-    cur.execute('INSERT INTO anki_accountability (ROWID, deck_name, study_date,\
+    cur.execute('INSERT INTO ' + TABLE_NAME + ' (ROWID, deck_name, study_date,\
                 study_complete, card_count) SELECT ROWID, deck_name,\
                 study_date, study_complete, card_count\
                 FROM _anki_accountability_old')
     cur.execute('DROP TABLE _anki_accountability_old')
+    cur.execute('UPDATE ' + DB_VER_TABLE + ' SET major_version = ' +
+                str(newVersion) + ' WHERE ROWID = 1')
