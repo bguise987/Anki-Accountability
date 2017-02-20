@@ -305,6 +305,8 @@ def myFinishedMsg(self, _old):
          Store date in YYYY-MM-DD format so SQL commands can help us eliminate
          old dates """
 
+    studyPercent = 100
+
     # Grab the current date, split out the parts we want
     now = dt.datetime.now()
     # Format string used so date conforms to SQLite timestamp format
@@ -400,6 +402,11 @@ def myFinishedMsg(self, _old):
     if (len(parents) != 0):
         showInfo("We found a child deck!")
         parents = mw.col.decks.parents(deckId)
+        deckName = mw.col.decks.name(deckId)
+        deckName = formatDeckNameForDatabase(deckName)
+        cardCount = mw.col.db.scalar("select count() from cards where did \
+                                            is %s" % deckId)
+
         # We use a for loop here so that the logic holds for decks that have
         # a parent and a grandparent
         for parent in parents:
@@ -410,7 +417,7 @@ def myFinishedMsg(self, _old):
             row = cur.fetchone()
 
             # Check if parent deck studying is complete, if so, log child study
-            if (row[3] == 100):
+            if (row is not None and row[3] == 100):
                 showInfo("Parent deck studying is complete!")
 
                 cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
