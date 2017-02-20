@@ -109,8 +109,8 @@ def requestInfo():
     widget.setTabOrder(numDaysText, confirmButton)
 
     # If the user has given us information before, let's try and access it now
-    # We can also look for other values that may not have been present in initial
-    # versions of the add on.
+    # We can also look for other values that may not have been present in
+    # initial versions of the add on.
     checkFirstTime = None
     numDays = None
     try:
@@ -162,9 +162,9 @@ def storeUserInfo(button, nameField, emailField, numDaysField, dialogBox):
                 mw.col.conf['exist_prof_anki_actbil'] = False
 
             # Store information to mw.col.conf, as per add on writing guide
-            # Note: We don't check to see if a previous profile exists. This allows the
-            # user to change his/her email address or name if a previous error was
-            # made.
+            # Note: We don't check to see if a previous profile exists. This
+            # allows the user to change his/her email address or name if a
+            # previous error was made.
             mw.col.conf['exist_prof_anki_actbil'] = True
             mw.col.conf['first_name_anki_actbil'] = firstName
             mw.col.conf['last_name_anki_actbil'] = lastName
@@ -214,8 +214,9 @@ def myTodayStats(self, _old):
         # Go to the last {{numDays}} days and check if there's a DB entry
         for i in range(1, numDays):
             prevDate = now - timedelta(days=i)
-            prevDate = (str(prevDate.year) + "-" + str(prevDate.strftime('%m')) +
-                        "-" + str(prevDate.strftime('%d')))
+            prevDate = (str(prevDate.year) + "-" +
+                        str(prevDate.strftime('%m')) + "-" +
+                        str(prevDate.strftime('%d')))
 
             # Create the study table (if this is not done, Anki will crash)
             createStudyTable(cur)
@@ -269,8 +270,9 @@ def myTodayStats(self, _old):
 
         deckName = formatDeckNameForDatabase(deckName)
         cur.execute('SELECT * FROM (SELECT study_date, study_complete, \
-            card_count FROM ' + TABLE_NAME + ' WHERE deck_name=? ORDER BY \
-            study_date DESC LIMIT ' + str(numDays) + ') ORDER BY study_date', (deckName,))
+                    card_count FROM ' + TABLE_NAME + ' WHERE deck_name=? ORDER BY \
+                    study_date DESC LIMIT ' + str(numDays) + ') ORDER BY\
+                    study_date', (deckName,))
 
         for row in cur:
             studyCompletion = "null"
@@ -371,7 +373,7 @@ def myFinishedMsg(self, _old):
             # We found a blank study day!
             if (row is None):
                 logStudyToDatabase(cur, deckName, currDate, studyPercent,
-                                 cardCount)
+                                   cardCount)
                 con.commit()
             else:
                 # Not a blank study day--check if study_complete is 100%
@@ -427,7 +429,7 @@ def myFinishedMsg(self, _old):
                 # We found a blank study day!
                 if (row is None):
                     logStudyToDatabase(cur, deckName, currDate, studyPercent,
-                                     cardCount)
+                                       cardCount)
                     con.commit()
                 else:
                     # Not a blank study day--check if study_complete is 100%
@@ -504,8 +506,8 @@ except AttributeError:
 def logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount):
     """Use provided cursor to log a successful study session"""
     cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, \
-        study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
-        (deckName, currDate, studyPercent, cardCount))
+                study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
+                (deckName, currDate, studyPercent, cardCount))
 
 
 # This will create the 2 study table
