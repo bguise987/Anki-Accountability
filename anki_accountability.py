@@ -330,29 +330,28 @@ def myFinishedMsg(self, _old):
     # If len(parents) is 0, we have the parent deck. Get children as
     # (name, deckId) and record studying complete for parent and child decks
     if (len(parents) == 0):
+        # TODO: Remove the showInfo
         showInfo("We found a parent deck!")
 
         deckName = mw.col.decks.name(deckId)
-        deckName = formatDeckNameForDatabase(deckName)
-        parentDeckName = deckName
+        parentDeckName = formatDeckNameForDatabase(deckName)
 
-        # Store the current date into the database and 100% complete
+        # TODO: Check if we've already logged a complete study for today.
+        # If we haven't, only then complete these steps and log it.
+
+        # Set the studyPercent variable up for use in the routine
         studyPercent = 100
-        cardCount = mw.col.db.scalar("select count() from cards where did \
-                                        is %s" % deckId)
-
-        logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount)
-        con.commit()
 
         children = mw.col.decks.children(deckId)
-        # As we iterate through child decks, increment so we can store total
-        # card count for the parent deck
+        # As we iterate through child decks, increment parentCardCount so we
+        # can store total card count for the parent deck
         parentCardCount = 0
         for child, childDeckId in children:
             fullChildName = mw.col.decks.name(childDeckId)
             # Split the text by :: since that's how Anki separates
             # parent::child, then only display the child name (childName[1])
             childName = fullChildName.split("::")
+            # TODO: Remove the showInfo
             showInfo("Here's a child: " + childName[1])
 
             deckName = childName[1]
@@ -365,9 +364,7 @@ def myFinishedMsg(self, _old):
 
             # Check if we have already made a log of today's session
             # and whether it was 100%
-            # TODO: Refactor so that this is a sep. method
-            cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
-            AND study_date = ?', (deckName, currDate))
+            checkStudyCurrDate(cur, deckName, currDate)
             row = cur.fetchone()
 
             # We found a blank study day!
@@ -385,16 +382,8 @@ def myFinishedMsg(self, _old):
                                  cardCount))
                     con.commit()
 
-        # Store the parent card count by selecting the row and updating
-        cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
-        AND study_date = ?', (parentDeckName, currDate))
-        row = cur.fetchone()
-        rowId = row[0]
-        studyPercent = row[3]
-        cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + '(rowid, \
-            deck_name, study_date, study_complete, card_count) \
-            VALUES(NULL, ?, ?, ?, ?)', (parentDeckName, currDate, studyPercent,
-                                        parentCardCount))
+        # Log the parent study along with the acculumated card count
+        logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount)
         con.commit()
 
     # If len(parents) is NOT 0, then we have a child deck. Check the status of
@@ -414,16 +403,14 @@ def myFinishedMsg(self, _old):
         for parent in parents:
             showInfo("Here's the parent deck name: " + parent['name'])
             parentDeckName = formatDeckNameForDatabase(parent['name'])
-            cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
-            AND study_date = ?', (parentDeckName, currDate))
+            checkStudyCurrDate(cur, parentDeckName, currDate)
             row = cur.fetchone()
 
             # Check if parent deck studying is complete, if so, log child study
             if (row is not None and row[3] == 100):
                 showInfo("Parent deck studying is complete!")
 
-                cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
-                AND study_date = ?', (deckName, currDate))
+                checkStudyCurrDate(cur, deckName, currDate)
                 row = cur.fetchone()
 
                 # We found a blank study day!
@@ -508,6 +495,13 @@ def logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount):
     cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, \
                 study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
                 (deckName, currDate, studyPercent, cardCount))
+
+
+def checkStudyCurrDate(cur, deckName, currDate):
+    """Use provided cursor to check the study database and return rows for
+    the given deck name and date"""
+    cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
+            AND study_date = ?', (deckName, currDate))
 
 
 # This will create the 2 study table
