@@ -229,7 +229,7 @@ def myTodayStats(self, _old):
             # We found a blank study day!
             if (row == 'None'):
                 # Store this date into the DB with value of 0
-                logStudyToDatabase(cur, deckName, prevDate, 0, cardCount)
+                logStudyToDatabase(cur, None, deckName, prevDate, 0, cardCount)
 
         con.commit()
         con.close()
@@ -369,21 +369,20 @@ def myFinishedMsg(self, _old):
 
             # We found a blank study day!
             if (row is None):
-                logStudyToDatabase(cur, deckName, currDate, studyPercent,
+                logStudyToDatabase(cur, None, deckName, currDate, studyPercent,
                                    cardCount)
                 con.commit()
             else:
                 # Not a blank study day--check if study_complete is 100%
                 if (row[3] != 100):
                     rowId = row[0]
-                    cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
-                                ' VALUES(?, ?, ?, ?, ?)',
-                                (rowId, deckName, currDate, studyPercent,
-                                 cardCount))
+                    logStudyToDatabase(cur, rowId, deckName, currDate,
+                                       studyPercent, cardCount)
                     con.commit()
 
         # Log the parent study along with the acculumated card count
-        logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount)
+        logStudyToDatabase(cur, None, deckName, currDate, studyPercent,
+                           cardCount)
         con.commit()
 
     # If len(parents) is NOT 0, then we have a child deck. Check the status of
@@ -415,17 +414,15 @@ def myFinishedMsg(self, _old):
 
                 # We found a blank study day!
                 if (row is None):
-                    logStudyToDatabase(cur, deckName, currDate, studyPercent,
-                                       cardCount)
+                    logStudyToDatabase(cur, None, deckName, currDate,
+                                       studyPercent, cardCount)
                     con.commit()
                 else:
                     # Not a blank study day--check if study_complete is 100%
                     if (row[3] != 100):
                         rowId = row[0]
-                        cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME +
-                                    ' VALUES(?, ?, ?, ?, ?)',
-                                    (rowId, deckName, currDate, studyPercent,
-                                     cardCount))
+                        logStudyToDatabase(cur, rowId, deckName, currDate,
+                                           studyPercent, cardCount)
                         con.commit()
             else:
                 showInfo("Parent deck studying was NOT complete :(")
@@ -490,11 +487,14 @@ except AttributeError:
 
 # TODO: Complete DB handling code
 # Operations code
-def logStudyToDatabase(cur, deckName, currDate, studyPercent, cardCount):
-    """Use provided cursor to log a successful study session"""
-    cur.execute('INSERT INTO ' + TABLE_NAME + '(rowid, deck_name, study_date, \
-                study_complete, card_count) VALUES(NULL, ?, ?, ?, ?)',
-                (deckName, currDate, studyPercent, cardCount))
+def logStudyToDatabase(cur, rowId, deckName, currDate, studyPercent,
+                       cardCount):
+    """Use provided cursor to log a study session. If None is passed for the
+    rowid, a new row is created. If an integer is passed, the row will
+    be replaced."""
+    cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + '(rowid, deck_name,\
+                study_date, study_complete, card_count) VALUES(?, ?, ?, ?, ?)',
+                (rowId, deckName, currDate, studyPercent, cardCount))
 
 
 def checkStudyCurrDate(cur, deckName, currDate):
