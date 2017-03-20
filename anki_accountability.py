@@ -140,16 +140,15 @@ def storeUserInfo(button, nameField, emailField, numDaysField, dialogBox):
         Once the information is stored, it will also close the diaglogBox
         for us. """
 
-    # Use some Regex's to split up the user's name into first and last name
-    enteredName = nameField.text().split(' ')
-    firstName = enteredName[0]
-    lastName = enteredName[1]
-
-    # Get the user's email address
-    enteredEmail = emailField.text()
-
     # Get the user's preference for number of study days to display
     try:
+        # Use some Regex's to split up the user's name into first and last name
+        enteredName = nameField.text().split(' ')
+        firstName = enteredName[0]
+        lastName = enteredName[1]
+
+        # Get the user's email address
+        enteredEmail = emailField.text()
         enteredNumDays = int(numDaysField.text())
 
         if enteredNumDays < 0:
@@ -179,6 +178,10 @@ def storeUserInfo(button, nameField, emailField, numDaysField, dialogBox):
     except ValueError:
         showInfo("Please enter a number (like 7 or 10) and not text")
         enteredNumDays = 0
+    # This can occur if the user leaves the text boxes blank
+    except IndexError:
+        showInfo("Please enter a valid first and last name, \
+                 separated by a space")
 
 
 def myTodayStats(self, _old):
