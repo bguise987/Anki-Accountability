@@ -381,8 +381,8 @@ def myFinishedMsg(self, _old):
                     con.commit()
 
         # Log the parent study along with the acculumated card count
-        logStudyToDatabase(cur, None, deckName, currDate, studyPercent,
-                           cardCount)
+        logStudyToDatabase(cur, None, parentDeckName, currDate, studyPercent,
+                           parentCardCount)
         con.commit()
 
     # If len(parents) is NOT 0, then we have a child deck. Check the status of
