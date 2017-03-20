@@ -257,20 +257,33 @@ def myTodayStats(self, _old):
         # Check if this is a parent deck
         # Get the parents array
         parents = mw.col.decks.parents(deckId)
-        # If parent deck, cycle through children to get total card count
+        # If parent deck, cycle through children to get total card count 
+        # and child deck names
         if (len(parents) == 0):
+            # This list of tuples will help us make the stats image below
+            childInfo = []
             children = mw.col.decks.children(deckId)
             cardCount = 0
             for child, childDeckId in children:
                 childCardCount = mw.col.db.scalar("select count() from cards where did \
                                                 is %s" % childDeckId)
                 cardCount = cardCount + childCardCount
+                childDeckName = mw.col.decks.name(childDeckId).split("::")[1]
+                childInfo.append((childDeckName, childCardCount))
+            # This helps the display order look...orderly
+            childInfo.sort()
         else:
             # If NOT a parent deck, just ask Anki's DB for the card count
             cardCount = mw.col.db.scalar("select count() from cards where did \
                                     is %s" % deckId)
 
         txt += "<div><b>Deck name: " + deckName + "</b></div>"
+        # If parent deck, also add in child deck information
+        if (len(parents) == 0):
+            for childDeckName, childDeckCount in childInfo:
+                txt += "<div><b>|_&nbsp;" + childDeckName + \
+                    "&nbsp;&nbsp;&nbsp;" + str(childDeckCount) + \
+                    " Cards</b></div>"
         txt += "<div><b>Total cards in deck: </b>" + str(cardCount) + "</div>"
         txt += "<div><b>Studying last " + str(numDays) + " days: </b></div>"
 
