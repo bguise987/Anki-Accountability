@@ -253,7 +253,21 @@ def myTodayStats(self, _old):
         # Get some information about the deck
         deckId = mw.col.decks.selected()
         deckName = mw.col.decks.name(deckId)
-        cardCount = mw.col.db.scalar("select count() from cards where did \
+
+        # Check if this is a parent deck
+        # Get the parents array
+        parents = mw.col.decks.parents(deckId)
+        # If parent deck, cycle through children to get total card count
+        if (len(parents) == 0):
+            children = mw.col.decks.children(deckId)
+            cardCount = 0
+            for child, childDeckId in children:
+                childCardCount = mw.col.db.scalar("select count() from cards where did \
+                                                is %s" % childDeckId)
+                cardCount = cardCount + childCardCount
+        else:
+            # If NOT a parent deck, just ask Anki's DB for the card count
+            cardCount = mw.col.db.scalar("select count() from cards where did \
                                     is %s" % deckId)
 
         txt += "<div><b>Deck name: " + deckName + "</b></div>"
