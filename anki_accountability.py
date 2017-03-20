@@ -336,54 +336,57 @@ def myFinishedMsg(self, _old):
         deckName = mw.col.decks.name(deckId)
         parentDeckName = formatDeckNameForDatabase(deckName)
 
-        # TODO: Check if we've already logged a complete study for today.
+        # TODO: Check if we've already logged a complete parent study for today
         # If we haven't, only then complete these steps and log it.
-
-        # Set the studyPercent variable up for use in the routine
-        studyPercent = 100
-
-        children = mw.col.decks.children(deckId)
-        # As we iterate through child decks, increment parentCardCount so we
-        # can store total card count for the parent deck
-        parentCardCount = 0
-        for child, childDeckId in children:
-            fullChildName = mw.col.decks.name(childDeckId)
-            # Split the text by :: since that's how Anki separates
-            # parent::child, then only display the child name (childName[1])
-            childName = fullChildName.split("::")
-            # TODO: Remove the showInfo
-            showInfo("Here's a child: " + childName[1])
-
-            deckName = childName[1]
-            deckName = formatDeckNameForDatabase(deckName)
-            cardCount = mw.col.db.scalar("select count() from cards where did \
-                                            is %s" % childDeckId)
-            parentCardCount = parentCardCount + cardCount
-            # Store the current date into the database and 100% complete
+        checkStudyCurrDate(cur, parentDeckName, currDate)
+        row = cur.fetchone()
+        if (row is None or row[3] != 100):
+            # Set the studyPercent variable up for use in the routine
             studyPercent = 100
 
-            # Check if we have already made a log of today's session
-            # and whether it was 100%
-            checkStudyCurrDate(cur, deckName, currDate)
-            row = cur.fetchone()
+            children = mw.col.decks.children(deckId)
+            # As we iterate through child decks, increment parentCardCount so
+            # we can store total card count for the parent deck
+            parentCardCount = 0
+            for child, childDeckId in children:
+                fullChildName = mw.col.decks.name(childDeckId)
+                # Split the text by :: since that's how Anki separates
+                # parent::child, then only display the child name
+                # (childName[1])
+                childName = fullChildName.split("::")
+                # TODO: Remove the showInfo
+                showInfo("Here's a child: " + childName[1])
 
-            # We found a blank study day!
-            if (row is None):
-                logStudyToDatabase(cur, None, deckName, currDate, studyPercent,
-                                   cardCount)
-                con.commit()
-            else:
-                # Not a blank study day--check if study_complete is 100%
-                if (row[3] != 100):
-                    rowId = row[0]
-                    logStudyToDatabase(cur, rowId, deckName, currDate,
+                deckName = childName[1]
+                deckName = formatDeckNameForDatabase(deckName)
+                cardCount = mw.col.db.scalar("select count() from cards where did \
+                                                is %s" % childDeckId)
+                parentCardCount = parentCardCount + cardCount
+                # Store the current date into the database and 100% complete
+                studyPercent = 100
+
+                # Check if we have already made a log of today's session
+                # and whether it was 100%
+                checkStudyCurrDate(cur, deckName, currDate)
+                row = cur.fetchone()
+
+                # We found a blank study day!
+                if (row is None):
+                    logStudyToDatabase(cur, None, deckName, currDate,
                                        studyPercent, cardCount)
                     con.commit()
+                else:
+                    # Not a blank study day--check if study_complete is 100%
+                    if (row[3] != 100):
+                        rowId = row[0]
+                        logStudyToDatabase(cur, rowId, deckName, currDate,
+                                           studyPercent, cardCount)
+                        con.commit()
 
-        # Log the parent study along with the acculumated card count
-        logStudyToDatabase(cur, None, parentDeckName, currDate, studyPercent,
-                           parentCardCount)
-        con.commit()
+            # Log the parent study along with the acculumated card count
+            logStudyToDatabase(cur, None, parentDeckName, currDate,
+                               studyPercent, parentCardCount)
+            con.commit()
 
     # If len(parents) is NOT 0, then we have a child deck. Check the status of
     # the parent deck. If studying is NOT complete for the parent, do nothing.
