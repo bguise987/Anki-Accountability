@@ -390,6 +390,7 @@ def myFinishedMsg(self, _old):
     # If studying IS complete for the parent, log the studying of this child
     # deck as complete as well.
     if (len(parents) != 0):
+        # TODO: remove the showInfo here
         showInfo("We found a child deck!")
         parents = mw.col.decks.parents(deckId)
         deckName = mw.col.decks.name(deckId)
@@ -400,6 +401,7 @@ def myFinishedMsg(self, _old):
         # We use a for loop here so that the logic holds for decks that have
         # a parent and a grandparent
         for parent in parents:
+            # TODO: remove the showInfo here
             showInfo("Here's the parent deck name: " + parent['name'])
             parentDeckName = formatDeckNameForDatabase(parent['name'])
             checkStudyCurrDate(cur, parentDeckName, currDate)
@@ -407,6 +409,7 @@ def myFinishedMsg(self, _old):
 
             # Check if parent deck studying is complete, if so, log child study
             if (row is not None and row[3] == 100):
+                # TODO: remove the showInfo here
                 showInfo("Parent deck studying is complete!")
 
                 checkStudyCurrDate(cur, deckName, currDate)
@@ -425,6 +428,7 @@ def myFinishedMsg(self, _old):
                                            studyPercent, cardCount)
                         con.commit()
             else:
+                # TODO: remove the showInfo here
                 showInfo("Parent deck studying was NOT complete :(")
 
     # Close the DB connection
