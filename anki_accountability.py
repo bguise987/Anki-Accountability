@@ -224,10 +224,10 @@ def myTodayStats(self, _old):
             # Create the study table (if this is not done, Anki will crash)
             createStudyTable(cur)
 
-            # 	If there is no entry, create one and set to 0
+            # If there is no entry, create one and set to 0
             cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
                         study_date=?', (deckName, prevDate))
-            row = str(cur.fetchone())
+            row = cur.fetchone()
 
             # We found a blank study day!
             if row is None:
@@ -305,7 +305,6 @@ def myTodayStats(self, _old):
                     study_date', (deckName,))
 
         for row in cur:
-            showInfo("Here's a row from the DB!")
             studyCompletion = "null"
             if (row is None or row['study_complete'] == 0):
                 studyCompletion = "Incomplete"
