@@ -299,6 +299,8 @@ def myTodayStats(self, _old):
                         str(prevDate.strftime('%d')))
 
         deckName = formatDeckNameForDatabase(deckName)
+        # We run the query within the query so that we can SELECT the data that
+        # we want, then sort it so that it appears in chronological order
         cur.execute('SELECT * FROM (SELECT study_date, study_complete, \
                     card_count FROM ' + TABLE_NAME + ' WHERE deck_name=? ORDER BY \
                     study_date DESC LIMIT ' + str(numDays) + ') ORDER BY\
