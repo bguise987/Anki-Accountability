@@ -230,7 +230,7 @@ def myTodayStats(self, _old):
             row = str(cur.fetchone())
 
             # We found a blank study day!
-            if (row == 'None'):
+            if row is None:
                 # Store this date into the DB with value of 0
                 logStudyToDatabase(cur, None, deckName, prevDate, 0, cardCount)
 
@@ -257,7 +257,7 @@ def myTodayStats(self, _old):
         # Check if this is a parent deck
         # Get the parents array
         parents = mw.col.decks.parents(deckId)
-        # If parent deck, cycle through children to get total card count 
+        # If parent deck, cycle through children to get total card count
         # and child deck names
         if (len(parents) == 0):
             # This list of tuples will help us make the stats image below
@@ -305,8 +305,9 @@ def myTodayStats(self, _old):
                     study_date', (deckName,))
 
         for row in cur:
+            showInfo("Here's a row from the DB!")
             studyCompletion = "null"
-            if (row['study_complete'] == 0):
+            if (row is None or row['study_complete'] == 0):
                 studyCompletion = "Incomplete"
             else:
                 studyCompletion = "Complete"
@@ -564,7 +565,7 @@ def checkDBVersion():
     row = cur.fetchone()
 
     # We found a blank versioning table
-    if row == 'None':
+    if row is None:
         cur.execute('INSERT INTO ' + DB_VER_TABLE + '(rowid, major_version, \
         minor_version) VALUES(NULL, ?, ?)', (MAJOR_VERSION, MINOR_VERSION))
         con.commit()
