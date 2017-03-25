@@ -202,10 +202,30 @@ def myTodayStats(self, _old):
 
     # Grab the current deckName and cardCount
     deckId = mw.col.decks.selected()
-    deckName = mw.col.decks.name(deckId)
-    deckName = formatDeckNameForDatabase(deckName)
-    cardCount = mw.col.db.scalar("select count() from cards where did \
-                                    is %s" % deckId)
+    deckName = formatDeckNameForDatabase(mw.col.decks.name(deckId))
+
+    # Check if this is a parent deck
+    # Get the parents array
+    parents = mw.col.decks.parents(deckId)
+    # If parent deck, cycle through children to get total card count
+    # and child deck names
+    if (len(parents) == 0):
+        # This list of tuples will help us make the stats image below
+        childInfo = []
+        children = mw.col.decks.children(deckId)
+        cardCount = 0
+        for child, childDeckId in children:
+            childCardCount = mw.col.db.scalar("select count() from cards where did \
+                                            is %s" % childDeckId)
+            cardCount = cardCount + childCardCount
+            childDeckName = mw.col.decks.name(childDeckId).split("::")[1]
+            childInfo.append((childDeckName, childCardCount))
+        # This helps the display order look...orderly
+        childInfo.sort()
+    else:
+        # If NOT a parent deck, just ask Anki's DB for the card count
+        cardCount = mw.col.db.scalar("select count() from cards where did \
+                                     is %s" % deckId)
 
     try:
         # Extract user info from use mw.col.conf
@@ -250,33 +270,6 @@ def myTodayStats(self, _old):
             _("Anki Accountability"),
             _("<font size='5'>" + userName + ", " + userEmail + "</font>"))
 
-        # Get some information about the deck
-        deckId = mw.col.decks.selected()
-        deckName = mw.col.decks.name(deckId)
-
-        # Check if this is a parent deck
-        # Get the parents array
-        parents = mw.col.decks.parents(deckId)
-        # If parent deck, cycle through children to get total card count
-        # and child deck names
-        if (len(parents) == 0):
-            # This list of tuples will help us make the stats image below
-            childInfo = []
-            children = mw.col.decks.children(deckId)
-            cardCount = 0
-            for child, childDeckId in children:
-                childCardCount = mw.col.db.scalar("select count() from cards where did \
-                                                is %s" % childDeckId)
-                cardCount = cardCount + childCardCount
-                childDeckName = mw.col.decks.name(childDeckId).split("::")[1]
-                childInfo.append((childDeckName, childCardCount))
-            # This helps the display order look...orderly
-            childInfo.sort()
-        else:
-            # If NOT a parent deck, just ask Anki's DB for the card count
-            cardCount = mw.col.db.scalar("select count() from cards where did \
-                                    is %s" % deckId)
-
         txt += "<div><b>Deck name: " + deckName + "</b></div>"
         # If parent deck, also add in child deck information
         if (len(parents) == 0):
@@ -298,7 +291,6 @@ def myTodayStats(self, _old):
                         str(prevDate.strftime('%m')) + "-" +
                         str(prevDate.strftime('%d')))
 
-        deckName = formatDeckNameForDatabase(deckName)
         # We run the query within the query so that we can SELECT the data that
         # we want, then sort it so that it appears in chronological order
         cur.execute('SELECT * FROM (SELECT study_date, study_complete, \
