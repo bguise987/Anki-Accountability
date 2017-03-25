@@ -324,7 +324,7 @@ def myTodayStats(self, _old):
     return txt
 
 
-def myFinishedMsg(self, _old):
+def myFinishedMsg(self):
     """ New finished message method that will log a complete study session for us
          Store this in prefs.db within the user's
          ~/Documents/Anki/User 1/collection.media directory
@@ -451,8 +451,6 @@ def myFinishedMsg(self, _old):
 
     # Close the DB connection
     con.close()
-    # Run the original method
-    _old(self)
 
 
 def displayPreview(recEmail, userEmail, userName):
@@ -496,7 +494,7 @@ except AttributeError:
 # Enable logging of a complete study session by wrapping existing method
 try:
     sched.Scheduler.finishedMsg = wrap(sched.Scheduler.finishedMsg,
-                                       myFinishedMsg, "around")
+                                       myFinishedMsg, "before")
 except AttributeError:
     showInfo("Error running Anki Accountability. \
     Could not wrap the finishedMsg method.")
