@@ -448,6 +448,14 @@ def myFinishedMsg(self):
                         logStudyToDatabase(cur, rowId, deckName, currDate,
                                            studyPercent, cardCount)
                         con.commit()
+            else:
+                # Display a message letting the user know to study the parent
+                # deck or remove the deck and study separately
+                showInfo("Because this is a nested deck, your study has not \
+                        been logged as complete. To have your study logged \
+                        as complete, either study the main deck to \
+                        completion, or remove this deck from the main deck \
+                        and click 'study now' again.")
 
     # Close the DB connection
     con.close()
