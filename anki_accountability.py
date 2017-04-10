@@ -54,6 +54,8 @@ def requestInfo():
     # Setup and show the window
     mw.myWidget = widget = QWidget()
     widget.setWindowTitle("Anki Accountability")
+    # TODO: Figure out how to make this relative to Anki, not the
+    # computer's screen
     widget.setGeometry(350, 200, 500, 225)
 
     # Labels
@@ -451,14 +453,56 @@ def myFinishedMsg(self):
             else:
                 # Display a message letting the user know to study the parent
                 # deck or remove the deck and study separately
-                showInfo("Because this is a nested deck, your study has not \
-                        been logged as complete. To have your study logged \
-                        as complete, either study the main deck to \
-                        completion, or remove this deck from the main deck \
-                        and click 'study now' again.")
+                # customPrettyMessage
+                studyMsg = "Anki Accountability Message: Because this is a " +\
+                    "nested deck, your study has not been logged as " +\
+                    "complete. To have your study logged as " +\
+                    "complete, either study the main deck to " +\
+                    "completion, or remove this deck from the main deck " +\
+                    "and click 'study now' again."
+                showInfo(studyMsg)
 
     # Close the DB connection
     con.close()
+
+
+def customPrettyMessage(messageContent):
+    """Display a message that's a little more sophisticated than just
+       showInfo(). Sets the title of the window to 'Anki Accountability
+       Message'. Clicking OK closes the window."""
+    # TODO: Remove if not needed for myFinishedMsg
+
+    # Setup and show the window
+    mw.myWidget = widget = QWidget()
+    widget.setWindowTitle("Anki Accountability Message")
+    # TODO: Figure out how to make this relative to Anki, not the
+    # computer's screen
+    widget.setGeometry(350, 200, 450, 150)
+
+    # Labels
+    descLabel = QLabel(messageContent)
+    descLabel.setTextFormat(1)
+    descLabel.setWordWrap(True)
+
+    # Button to accept and close prompt
+    confirmButton = QPushButton("Ok")
+    confirmButton.clicked.connect(lambda: widget.hide())
+    confirmButton.setFixedWidth(80)
+
+    # Layout - create a main layout and then separate it into top and bottom
+    # Top will be just the description, bottom will be the form
+    mainLayout = QVBoxLayout(widget)
+
+    # Bottom layout items
+    bottomLayout = QGridLayout(widget)
+    bottomLayout.addWidget(confirmButton, 3, 1)
+
+    # Add top and bottom layout items into the main layout
+    mainLayout.addWidget(descLabel)
+    mainLayout.addLayout(bottomLayout)
+
+    # Show the window
+    widget.show()
 
 
 def displayPreview(recEmail, userEmail, userName):
