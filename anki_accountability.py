@@ -275,10 +275,14 @@ def myTodayStats(self, _old):
         txt += "<div><b>Deck name: " + deckName + "</b></div>"
         # If parent deck, also add in child deck information
         if (len(parents) == 0):
+            txt += "<br>Child decks:<br>"
+            txt += "--------------------------------------"
             for childDeckName, childDeckCount in childInfo:
-                txt += "<div><b>|_&nbsp;" + childDeckName + \
+                txt += "<div><b>&nbsp;" + childDeckName + \
                     "&nbsp;&nbsp;&nbsp;" + str(childDeckCount) + \
                     " Cards</b></div>"
+            txt += "--------------------------------------"
+            txt += "<br>"
         txt += "<div><b>Total cards in deck: </b>" + str(cardCount) + "</div>"
         txt += "<div><b>Studying last " + str(numDays) + " days: </b></div>"
 
