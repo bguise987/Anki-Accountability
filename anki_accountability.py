@@ -17,6 +17,9 @@ from aqt.utils import getText
 
 from anki.hooks import wrap
 
+# import the Scheduler so we can tell when cards are due in future
+from anki.sched import Scheduler
+
 # imports for methods that we wrap
 from anki import stats
 from anki import sched
@@ -239,9 +242,6 @@ def myTodayStats(self, _old):
         # Go to the last {{numDays}} days and check if there's a DB entry
         for i in range(1, numDays):
             prevDate = now - timedelta(days=i)
-            prevDate = (str(prevDate.year) + "-" +
-                        str(prevDate.strftime('%m')) + "-" +
-                        str(prevDate.strftime('%d')))
 
             # Create the study table (if this is not done, Anki will crash)
             createStudyTable(cur)
@@ -291,11 +291,10 @@ def myTodayStats(self, _old):
         con.row_factory = sqlite.Row
         cur = con.cursor()
 
+        # TODO: Why is this looping?
         for i in range(numDays, 1, -1):
             prevDate = now - timedelta(days=i)
-            prevDate = (str(prevDate.year) + "-" +
-                        str(prevDate.strftime('%m')) + "-" +
-                        str(prevDate.strftime('%d')))
+            prevDate = prevDate.strftime(TIMESTAMP_FORMAT_STR)
 
         # We run the query within the query so that we can SELECT the data that
         # we want, then sort it so that it appears in chronological order
@@ -337,12 +336,17 @@ def myFinishedMsg(self):
          Store date in YYYY-MM-DD format so SQL commands can help us eliminate
          old dates """
 
+    # TODO: Remove this once lookahead feature complete
+    # Get the due forecast for the next 7 days (0th day is today)
+    future = Scheduler.dueForecast(self, 7)
+    # Exclude the first item in the list, as it's the current day
+    for x in future[1:]:
+        showInfo(str(x))
+
     studyPercent = 100
 
     # Grab the current date, split out the parts we want
-    now = dt.datetime.now()
-    # Format string used so date conforms to SQLite timestamp format
-    currDate = now.strftime(TIMESTAMP_FORMAT_STR)
+    currDate = dt.datetime.now()
 
     # Get the deck ID - this will let us look up other information
     deckId = mw.col.decks.selected()
@@ -394,6 +398,8 @@ def myFinishedMsg(self):
             if (row is None):
                 logStudyToDatabase(cur, None, deckName, currDate,
                                    studyPercent, cardCount)
+                lookAheadAndLog(self, cur, deckName, currDate, studyPercent,
+                                cardCount)
                 con.commit()
             else:
                 # Not a blank study day--check if study_complete is 100%
@@ -401,6 +407,8 @@ def myFinishedMsg(self):
                     rowId = row[0]
                     logStudyToDatabase(cur, rowId, deckName, currDate,
                                        studyPercent, cardCount)
+                    lookAheadAndLog(self, cur, deckName, currDate,
+                                    studyPercent, cardCount)
                     con.commit()
 
         # Log the parent study along with the acculumated card count
@@ -413,9 +421,13 @@ def myFinishedMsg(self):
         if (row is None):
             logStudyToDatabase(cur, None, parentDeckName, currDate,
                                studyPercent, parentCardCount)
+            lookAheadAndLog(self, cur, deckName, currDate, studyPercent,
+                            cardCount)
         else:
             logStudyToDatabase(cur, row[0], parentDeckName, currDate,
                                studyPercent, parentCardCount)
+            lookAheadAndLog(self, cur, deckName, currDate, studyPercent,
+                            cardCount)
 
         con.commit()
 
@@ -446,6 +458,8 @@ def myFinishedMsg(self):
                 if (row is None):
                     logStudyToDatabase(cur, None, deckName, currDate,
                                        studyPercent, cardCount)
+                    lookAheadAndLog(self, cur, deckName, currDate,
+                                    studyPercent, cardCount)
                     con.commit()
                 else:
                     # Not a blank study day--check if study_complete is 100%
@@ -453,6 +467,8 @@ def myFinishedMsg(self):
                         rowId = row[0]
                         logStudyToDatabase(cur, rowId, deckName, currDate,
                                            studyPercent, cardCount)
+                        lookAheadAndLog(self, cur, deckName, currDate,
+                                        studyPercent, cardCount)
                         con.commit()
             else:
                 # Display a message letting the user know to study the parent
@@ -558,29 +574,55 @@ except AttributeError:
 
 
 # ****************************************************************************
-# Database handling functions (for maintenance and operations)
+# Functions to handle general operations
 # ****************************************************************************
 
-# TODO: Complete DB handling code
-# Operations code
-def logStudyToDatabase(cur, rowId, deckName, currDate, studyPercent,
+def lookAheadAndLog(self, cur, deckName, currDate, studyPercent, cardCount):
+    """Look ahead number of days user has entered for deck and log any future
+    dates where no cards are due as studied. currDate should be a
+    datetime.datetime object."""
+    # Extract number of days from the collection dictionary
+    numDays = int(mw.col.conf['num_days_show_anki_actbil'])
+    # Find the due forecast for this deck, returned as array of integers
+    future = Scheduler.dueForecast(self, numDays)
+    # Iterate through this list, excluding today (first entry)
+    daysAhead = 1
+    for x in future[1:]:
+        if (x != 0):
+            break
+        # Log the study for this future date
+        futureDate = currDate + timedelta(days=daysAhead)
+        daysAhead += 1
+        logStudyToDatabase(cur, None, deckName, futureDate, studyPercent,
+                           cardCount)
+
+
+def logStudyToDatabase(cur, rowId, deckName, date, studyPercent,
                        cardCount):
     """Use provided cursor to log a study session. If None is passed for the
     rowid, a new row is created. If an integer is passed, the row will
-    be replaced."""
+    be replaced. Date should be passed as a datetime.datetime object."""
+    date = date.strftime(TIMESTAMP_FORMAT_STR)
     cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + '(rowid, deck_name,\
                 study_date, study_complete, card_count) VALUES(?, ?, ?, ?, ?)',
-                (rowId, deckName, currDate, studyPercent, cardCount))
+                (rowId, deckName, date, studyPercent, cardCount))
 
 
-def checkStudyCurrDate(cur, deckName, currDate):
+def checkStudyCurrDate(cur, deckName, date):
     """Use provided cursor to check the study database and return rows for
-    the given deck name and date"""
+    the given deck name and date. date should be passed as a datetime.datetime
+    object."""
+    date = date.strftime(TIMESTAMP_FORMAT_STR)
     cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
-            AND study_date = ?', (deckName, currDate))
+            AND study_date = ?', (deckName, date))
 
+# ****************************************************************************
+# Database handling functions (for maintenance and operations)
+# ****************************************************************************
 
 # This will create the 2 study table
+
+
 def createStudyTable(cur):
     """ Create the table (and database) that will store study progress """
     cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER \
