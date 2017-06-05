@@ -585,6 +585,12 @@ def lookAheadAndLog(self, cur, deckName, currDate, studyPercent, cardCount):
     numDays = int(mw.col.conf['num_days_show_anki_actbil'])
     # Find the due forecast for this deck, returned as array of integers
     future = Scheduler.dueForecast(self, numDays)
+
+    # TODO: Remove this
+    showInfo("Inside the lookAheadAndLog function, this is what we see")
+    for i in future:
+        showInfo(str(i))
+
     # Iterate through this list, excluding today (first entry)
     daysAhead = 1
     for x in future[1:]:
