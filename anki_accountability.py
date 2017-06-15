@@ -422,12 +422,12 @@ def myFinishedMsg(self):
             logStudyToDatabase(cur, None, parentDeckName, currDate,
                                studyPercent, parentCardCount)
             lookAheadAndLog(self, cur, deckName, currDate, studyPercent,
-                            cardCount)
+                            parentCardCount)
         else:
             logStudyToDatabase(cur, row[0], parentDeckName, currDate,
                                studyPercent, parentCardCount)
             lookAheadAndLog(self, cur, deckName, currDate, studyPercent,
-                            cardCount)
+                            parentCardCount)
 
         con.commit()
 
