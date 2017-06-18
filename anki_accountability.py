@@ -307,6 +307,8 @@ def myTodayStats(self, _old):
             studyCompletion = "null"
             if (row is None or row['study_complete'] == 0):
                 studyCompletion = "Incomplete"
+            elif (row['study_complete'] == -1):
+                studyCompletion = "No Data"
             else:
                 studyCompletion = "Complete"
 
