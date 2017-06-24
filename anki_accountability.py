@@ -248,7 +248,7 @@ def myTodayStats(self, _old):
 
             # If there is no entry, create one and set to 0
             cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
-                        study_date=?', (deckName, prevDate))
+                        study_date=?', (deckName, prevDate.strftime(TIMESTAMP_FORMAT_STR)))
             row = cur.fetchone()
 
             # We found a blank study day!
@@ -609,7 +609,7 @@ def logStudyToDatabase(cur, rowId, deckName, date, studyPercent,
                        cardCount):
     """Use provided cursor to log a study session. If None is passed for the
     rowid, a new row is created. If an integer is passed, the row will
-    be replaced. Date should be passed as a datetime.datetime object."""
+    be replaced. date should be passed as a datetime.datetime object."""
     date = date.strftime(TIMESTAMP_FORMAT_STR)
     cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + '(rowid, deck_name,\
                 study_date, study_complete, card_count) VALUES(?, ?, ?, ?, ?)',
@@ -623,6 +623,26 @@ def checkStudyCurrDate(cur, deckName, date):
     date = date.strftime(TIMESTAMP_FORMAT_STR)
     cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
             AND study_date = ?', (deckName, date))
+
+
+def checkIfNewDeck(cur, deckName, cardCount):
+    """Use provided cursor to check the study database and see if any rows \
+    exist for the given deckName. If none exist, then it is a new deck and we \
+    should log the previous 15 days as -1 for study_complete to denote that \
+    the deck wasn't there before."""
+    cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ?',
+                (deckName))
+    row = cur.fetchone()
+
+    # Check if there is no data at all for this deck
+    if (row is None):
+        currDate = dt.datetime.now()
+        currDate = currDate.strftime(TIMESTAMP_FORMAT_STR)
+
+        for i in range(1, 15):
+            prevDate = currDate - timedelta(days=i)
+            prevDate = prevDate.strftime(TIMESTAMP_FORMAT_STR)
+            logStudyToDatabase(cur, None, deckName, prevDate, -1, cardCount)
 
 # ****************************************************************************
 # Database handling functions (for maintenance and operations)
