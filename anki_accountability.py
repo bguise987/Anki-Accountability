@@ -338,12 +338,11 @@ def myFinishedMsg(self):
          Store date in YYYY-MM-DD format so SQL commands can help us eliminate
          old dates """
 
-    # TODO: Remove this once lookahead feature complete
     # Get the due forecast for the next 7 days (0th day is today)
     future = Scheduler.dueForecast(self, 7)
+    # TODO: Remove this once lookahead feature complete
     # Exclude the first item in the list, as it's the current day
-    for x in future[1:]:
-        showInfo(str(x))
+    showInfo(str(future[1:]))
 
     studyPercent = 100
 
@@ -590,8 +589,7 @@ def lookAheadAndLog(self, cur, deckName, currDate, studyPercent, cardCount):
 
     # TODO: Remove this
     showInfo("Inside the lookAheadAndLog function, this is what we see")
-    for i in future:
-        showInfo(str(i))
+    showInfo(str(future[1:]))
 
     # Iterate through this list, excluding today (first entry)
     daysAhead = 1
