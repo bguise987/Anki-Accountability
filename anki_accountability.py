@@ -248,7 +248,8 @@ def myTodayStats(self, _old):
 
             # If there is no entry, create one and set to 0
             cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
-                        study_date=?', (deckName, prevDate.strftime(TIMESTAMP_FORMAT_STR)))
+                        study_date=?',
+                        (deckName, prevDate.strftime(TIMESTAMP_FORMAT_STR)))
             row = cur.fetchone()
 
             # We found a blank study day!
