@@ -420,6 +420,12 @@ def myFinishedMsg(self):
         checkStudyCurrDate(cur, parentDeckName, currDate)
         row = cur.fetchone()
 
+        # This is needed to ensure we have correct card count. If a deck has no
+        # children we must get its card count from the database.
+        if (parentCardCount == 0):
+            parentCardCount = mw.col.db.scalar("select count() from cards where\
+                                                did is %s" % deckId)
+
         if (row is None):
             logStudyToDatabase(cur, None, parentDeckName, currDate,
                                studyPercent, parentCardCount)
