@@ -215,18 +215,27 @@ def myTodayStats(self, _old):
     # If parent deck, cycle through children to get total card count
     # and child deck names
     if (len(parents) == 0):
-        # This list of tuples will help us make the stats image below
-        childInfo = []
+
         children = mw.col.decks.children(deckId)
-        cardCount = 0
-        for child, childDeckId in children:
-            childCardCount = mw.col.db.scalar("select count() from cards where did \
-                                            is %s" % childDeckId)
-            cardCount = cardCount + childCardCount
-            childDeckName = mw.col.decks.name(childDeckId).split("::")[1]
-            childInfo.append((childDeckName, childCardCount))
-        # This helps the display order look...orderly
-        childInfo.sort()
+
+        if (len(children) > 0):
+
+            # This list of tuples will help us make the stats image below
+            childInfo = []
+            cardCount = 0
+            for child, childDeckId in children:
+                childCardCount = mw.col.db.scalar("select count() from cards where did \
+                                                is %s" % childDeckId)
+                cardCount = cardCount + childCardCount
+                childDeckName = mw.col.decks.name(childDeckId).split("::")[1]
+                childInfo.append((childDeckName, childCardCount))
+            # This helps the display order look...orderly
+            childInfo.sort()
+        else:
+            # If this is a parent deck with no children, just look up the count
+            cardCount = mw.col.db.scalar("select count() from cards where did \
+                                     is %s" % deckId)
+
     else:
         # If NOT a parent deck, just ask Anki's DB for the card count
         cardCount = mw.col.db.scalar("select count() from cards where did \
@@ -239,7 +248,13 @@ def myTodayStats(self, _old):
         userEmail = mw.col.conf['email_addr_anki_actbil']
         numDays = int(mw.col.conf['num_days_show_anki_actbil'])
 
+        # First check to see if this is a brand new deck. If it is, let's
+        # notate that in the DB so we can display 'No Data' rather than
+        # 'Incomplete' for previous study days
+        checkIfNewDeck(cur, deckName, cardCount)
+
         # Go to the last {{numDays}} days and check if there's a DB entry
+        # If there isn't one for the given day, we'll log it.
         for i in range(1, numDays):
             prevDate = now - timedelta(days=i)
 
@@ -391,6 +406,10 @@ def myFinishedMsg(self):
             # Store the current date into the database and 100% complete
             studyPercent = 100
 
+            # Check if this deck has been seen before. If not, log it so that
+            # 'No Data' displays in the stats image
+            checkIfNewDeck(cur, deckName, cardCount)
+
             # Check if we have already made a log of today's session
             # and whether it was 100%
             checkStudyCurrDate(cur, deckName, currDate)
@@ -425,6 +444,9 @@ def myFinishedMsg(self):
         if (parentCardCount == 0):
             parentCardCount = mw.col.db.scalar("select count() from cards where\
                                                 did is %s" % deckId)
+        # Check if this deck has been seen before. If not, log it so that
+        # 'No Data' displays in the stats image
+        checkIfNewDeck(cur, parentDeckName, parentCardCount)
 
         if (row is None):
             logStudyToDatabase(cur, None, parentDeckName, currDate,
@@ -449,6 +471,10 @@ def myFinishedMsg(self):
         deckName = formatDeckNameForDatabase(deckName)
         cardCount = mw.col.db.scalar("select count() from cards where did \
                                             is %s" % deckId)
+
+        # Check if this deck has been seen before. If not, log it so that
+        # 'No Data' displays in the stats image
+        checkIfNewDeck(cur, deckName, cardCount)
 
         # We use a for loop here so that the logic holds for decks that have
         # a parent and a grandparent
@@ -636,17 +662,16 @@ def checkIfNewDeck(cur, deckName, cardCount):
     should log the previous 15 days as -1 for study_complete to denote that \
     the deck wasn't there before."""
     cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ?',
-                (deckName))
+                (deckName,))
+
     row = cur.fetchone()
 
     # Check if there is no data at all for this deck
-    if (row is None):
+    if row is None:
         currDate = dt.datetime.now()
-        currDate = currDate.strftime(TIMESTAMP_FORMAT_STR)
 
         for i in range(1, 15):
             prevDate = currDate - timedelta(days=i)
-            prevDate = prevDate.strftime(TIMESTAMP_FORMAT_STR)
             logStudyToDatabase(cur, None, deckName, prevDate, -1, cardCount)
 
 # ****************************************************************************
