@@ -619,8 +619,15 @@ def lookAheadAndLog(self, cur, deckName, currDate, cardCount):
             # Log the study for this future date
             futureDate = currDate + timedelta(days=daysAhead)
 
-            logStudyToDatabase(cur, None, deckName, futureDate, studyPercent,
-                               cardCount)
+            # Check if we have already made a log of this day's session
+            # and whether it was 100%
+            checkStudyCurrDate(cur, deckName, futureDate)
+            row = cur.fetchone()
+
+            # We found a blank study day!
+            if (row is None):
+                logStudyToDatabase(cur, None, deckName, futureDate,
+                                   studyPercent, cardCount)
 
         daysAhead += 1
 
