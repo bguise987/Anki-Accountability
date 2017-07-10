@@ -252,6 +252,7 @@ def myTodayStats(self, _old):
         # notate that in the DB so we can display 'No Data' rather than
         # 'Incomplete' for previous study days
         checkIfNewDeck(cur, deckName, cardCount)
+        con.commit()
 
         # Go to the last {{numDays}} days and check if there's a DB entry
         # If there isn't one for the given day, we'll log it.
@@ -308,9 +309,9 @@ def myTodayStats(self, _old):
         cur = con.cursor()
 
         # TODO: Why is this looping?
-        for i in range(numDays, 1, -1):
-            prevDate = now - timedelta(days=i)
-            prevDate = prevDate.strftime(TIMESTAMP_FORMAT_STR)
+        # for i in range(numDays, 1, -1):
+        #     prevDate = now - timedelta(days=i)
+        #     prevDate = prevDate.strftime(TIMESTAMP_FORMAT_STR)
 
         # We run the query within the query so that we can SELECT the data that
         # we want, then sort it so that it appears in chronological order
@@ -419,18 +420,15 @@ def myFinishedMsg(self):
             if (row is None):
                 logStudyToDatabase(cur, None, deckName, currDate,
                                    studyPercent, cardCount)
-                lookAheadAndLog(self, cur, deckName, currDate, studyPercent,
-                                cardCount)
-                con.commit()
+                lookAheadAndLog(self, cur, deckName, currDate, cardCount)
             else:
                 # Not a blank study day--check if study_complete is 100%
                 if (row[3] != 100):
                     rowId = row[0]
                     logStudyToDatabase(cur, rowId, deckName, currDate,
                                        studyPercent, cardCount)
-                    lookAheadAndLog(self, cur, deckName, currDate,
-                                    studyPercent, cardCount)
-                    con.commit()
+                    lookAheadAndLog(self, cur, deckName, currDate, cardCount)
+            con.commit()
 
         # Log the parent study along with the acculumated card count
         # after checking whether we should be doing an insert or update.
@@ -451,13 +449,11 @@ def myFinishedMsg(self):
         if (row is None):
             logStudyToDatabase(cur, None, parentDeckName, currDate,
                                studyPercent, parentCardCount)
-            lookAheadAndLog(self, cur, deckName, currDate, studyPercent,
-                            parentCardCount)
+            lookAheadAndLog(self, cur, deckName, currDate, parentCardCount)
         else:
             logStudyToDatabase(cur, row[0], parentDeckName, currDate,
                                studyPercent, parentCardCount)
-            lookAheadAndLog(self, cur, deckName, currDate, studyPercent,
-                            parentCardCount)
+            lookAheadAndLog(self, cur, deckName, currDate, parentCardCount)
 
         con.commit()
 
@@ -492,9 +488,7 @@ def myFinishedMsg(self):
                 if (row is None):
                     logStudyToDatabase(cur, None, deckName, currDate,
                                        studyPercent, cardCount)
-                    lookAheadAndLog(self, cur, deckName, currDate,
-                                    studyPercent, cardCount)
-                    con.commit()
+                    lookAheadAndLog(self, cur, deckName, currDate, cardCount)
                 else:
                     # Not a blank study day--check if study_complete is 100%
                     if (row[3] != 100):
@@ -502,8 +496,7 @@ def myFinishedMsg(self):
                         logStudyToDatabase(cur, rowId, deckName, currDate,
                                            studyPercent, cardCount)
                         lookAheadAndLog(self, cur, deckName, currDate,
-                                        studyPercent, cardCount)
-                        con.commit()
+                                        cardCount)
             else:
                 # Display a message letting the user know to study the parent
                 # deck or remove the deck and study separately
@@ -516,6 +509,7 @@ def myFinishedMsg(self):
                     "and click 'study now' again."
                 showInfo(studyMsg)
 
+    con.commit()
     # Close the DB connection
     con.close()
 
@@ -611,7 +605,7 @@ except AttributeError:
 # Functions to handle general operations
 # ****************************************************************************
 
-def lookAheadAndLog(self, cur, deckName, currDate, studyPercent, cardCount):
+def lookAheadAndLog(self, cur, deckName, currDate, cardCount):
     """Look ahead number of days user has entered for deck and log any future
     dates where no cards are due as studied. currDate should be a
     datetime.datetime object."""
@@ -619,21 +613,33 @@ def lookAheadAndLog(self, cur, deckName, currDate, studyPercent, cardCount):
     numDays = int(mw.col.conf['num_days_show_anki_actbil'])
     # Find the due forecast for this deck, returned as array of integers
     future = Scheduler.dueForecast(self, numDays)
+    # Since we're marking future days as studied where apropriate, studyPercent
+    # should be 100
+    studyPercent = 100
+    deckName = formatDeckNameForDatabase(deckName)
 
     # TODO: Remove this
     showInfo("Inside the lookAheadAndLog function, this is what we see")
     showInfo(str(future[1:]))
 
     # Iterate through this list, excluding today (first entry)
+    # daysAhead starts at 1 since we construct the loop in such a way as to
+    # skip over the current date anyway
     daysAhead = 1
     for x in future[1:]:
-        if (x != 0):
-            break
-        # Log the study for this future date
-        futureDate = currDate + timedelta(days=daysAhead)
+        if (x == 0):
+            # Log the study for this future date
+            futureDate = currDate + timedelta(days=daysAhead)
+            # TODO: Remove this
+            showInfo("About to log a future study, with this many days ahead: " + str(daysAhead))
+
+            logStudyToDatabase(cur, None, deckName, futureDate, studyPercent,
+                               cardCount)
+        else:
+            # TODO: Remove this
+            showInfo("We're skipping the loop because we saw this: " + str(x))
+
         daysAhead += 1
-        logStudyToDatabase(cur, None, deckName, futureDate, studyPercent,
-                           cardCount)
 
 
 def logStudyToDatabase(cur, rowId, deckName, date, studyPercent,
@@ -642,6 +648,8 @@ def logStudyToDatabase(cur, rowId, deckName, date, studyPercent,
     rowid, a new row is created. If an integer is passed, the row will
     be replaced. date should be passed as a datetime.datetime object."""
     date = date.strftime(TIMESTAMP_FORMAT_STR)
+    # TODO: Remove this
+    showInfo("About to INSERT OR REPLACE this: " + str(rowId) + deckName + date + str(studyPercent) + str(cardCount))
     cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + '(rowid, deck_name,\
                 study_date, study_complete, card_count) VALUES(?, ?, ?, ?, ?)',
                 (rowId, deckName, date, studyPercent, cardCount))
