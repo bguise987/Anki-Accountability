@@ -308,11 +308,6 @@ def myTodayStats(self, _old):
         con.row_factory = sqlite.Row
         cur = con.cursor()
 
-        # TODO: Why is this looping?
-        # for i in range(numDays, 1, -1):
-        #     prevDate = now - timedelta(days=i)
-        #     prevDate = prevDate.strftime(TIMESTAMP_FORMAT_STR)
-
         # We run the query within the query so that we can SELECT the data that
         # we want, then sort it so that it appears in chronological order
         cur.execute('SELECT * FROM (SELECT study_date, study_complete, \
@@ -357,9 +352,6 @@ def myFinishedMsg(self):
 
     # Get the due forecast for the next 7 days (0th day is today)
     future = Scheduler.dueForecast(self, 7)
-    # TODO: Remove this once lookahead feature complete
-    # Exclude the first item in the list, as it's the current day
-    showInfo(str(future[1:]))
 
     studyPercent = 100
 
@@ -618,10 +610,6 @@ def lookAheadAndLog(self, cur, deckName, currDate, cardCount):
     studyPercent = 100
     deckName = formatDeckNameForDatabase(deckName)
 
-    # TODO: Remove this
-    showInfo("Inside the lookAheadAndLog function, this is what we see")
-    showInfo(str(future[1:]))
-
     # Iterate through this list, excluding today (first entry)
     # daysAhead starts at 1 since we construct the loop in such a way as to
     # skip over the current date anyway
@@ -630,14 +618,9 @@ def lookAheadAndLog(self, cur, deckName, currDate, cardCount):
         if (x == 0):
             # Log the study for this future date
             futureDate = currDate + timedelta(days=daysAhead)
-            # TODO: Remove this
-            showInfo("About to log a future study, with this many days ahead: " + str(daysAhead))
 
             logStudyToDatabase(cur, None, deckName, futureDate, studyPercent,
                                cardCount)
-        else:
-            # TODO: Remove this
-            showInfo("We're skipping the loop because we saw this: " + str(x))
 
         daysAhead += 1
 
@@ -648,8 +631,6 @@ def logStudyToDatabase(cur, rowId, deckName, date, studyPercent,
     rowid, a new row is created. If an integer is passed, the row will
     be replaced. date should be passed as a datetime.datetime object."""
     date = date.strftime(TIMESTAMP_FORMAT_STR)
-    # TODO: Remove this
-    showInfo("About to INSERT OR REPLACE this: " + str(rowId) + deckName + date + str(studyPercent) + str(cardCount))
     cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + '(rowid, deck_name,\
                 study_date, study_complete, card_count) VALUES(?, ?, ?, ?, ?)',
                 (rowId, deckName, date, studyPercent, cardCount))
