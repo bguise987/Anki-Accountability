@@ -412,14 +412,14 @@ def myFinishedMsg(self):
             if (row is None):
                 logStudyToDatabase(cur, None, deckName, currDate,
                                    studyPercent, cardCount)
-                lookAheadAndLog(self, cur, deckName, currDate, cardCount)
+                # lookAheadAndLog(self, cur, deckName, currDate, cardCount)
             else:
                 # Not a blank study day--check if study_complete is 100%
                 if (row[3] != 100):
                     rowId = row[0]
                     logStudyToDatabase(cur, rowId, deckName, currDate,
                                        studyPercent, cardCount)
-                    lookAheadAndLog(self, cur, deckName, currDate, cardCount)
+                    # lookAheadAndLog(self, cur, deckName, currDate, cardCount)
             con.commit()
 
         # Log the parent study along with the acculumated card count
@@ -441,11 +441,11 @@ def myFinishedMsg(self):
         if (row is None):
             logStudyToDatabase(cur, None, parentDeckName, currDate,
                                studyPercent, parentCardCount)
-            lookAheadAndLog(self, cur, deckName, currDate, parentCardCount)
+            # lookAheadAndLog(self, cur, deckName, currDate, parentCardCount)
         else:
             logStudyToDatabase(cur, row[0], parentDeckName, currDate,
                                studyPercent, parentCardCount)
-            lookAheadAndLog(self, cur, deckName, currDate, parentCardCount)
+            # lookAheadAndLog(self, cur, deckName, currDate, parentCardCount)
 
         con.commit()
 
@@ -480,15 +480,15 @@ def myFinishedMsg(self):
                 if (row is None):
                     logStudyToDatabase(cur, None, deckName, currDate,
                                        studyPercent, cardCount)
-                    lookAheadAndLog(self, cur, deckName, currDate, cardCount)
+                    # lookAheadAndLog(self, cur, deckName, currDate, cardCount)
                 else:
                     # Not a blank study day--check if study_complete is 100%
                     if (row[3] != 100):
                         rowId = row[0]
                         logStudyToDatabase(cur, rowId, deckName, currDate,
                                            studyPercent, cardCount)
-                        lookAheadAndLog(self, cur, deckName, currDate,
-                                        cardCount)
+                        # lookAheadAndLog(self, cur, deckName, currDate,
+                        #                 cardCount)
             else:
                 # Display a message letting the user know to study the parent
                 # deck or remove the deck and study separately
