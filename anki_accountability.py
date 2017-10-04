@@ -441,6 +441,8 @@ def myFinishedMsg(self):
         # 'No Data' displays in the stats image
         checkIfNewDeck(cur, parentDeckName, parentCardCount)
 
+        # If there's no row, pass None for rowId to do an INSERT
+        # Otherwise, pass the rowId so that an UPDATE is performed
         if (row is None):
             logStudyToDatabase(cur, None, parentDeckName, currDate,
                                studyPercent, parentCardCount)
