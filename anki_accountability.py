@@ -202,6 +202,10 @@ def myTodayStats(self, _old):
     con = sqlite.connect(DATABASE_NAME)
     cur = con.cursor()
 
+    # Running this guarantees that we have a valid database to query and
+    # prevents crashes
+    createStudyTable(cur)
+
     # Get the current date
     now = dt.datetime.now()
 
@@ -258,9 +262,6 @@ def myTodayStats(self, _old):
         # If there isn't one for the given day, we'll log it.
         for i in range(1, numDays):
             prevDate = now - timedelta(days=i)
-
-            # Create the study table (if this is not done, Anki will crash)
-            createStudyTable(cur)
 
             # If there is no entry, create one and set to 0
             cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
@@ -369,6 +370,8 @@ def myFinishedMsg(self):
 
     con = sqlite.connect(DATABASE_NAME)
     cur = con.cursor()
+    # Running this guarantees that we have a valid database to query and
+    # prevents crashes
     createStudyTable(cur)
 
     # If len(parents) is 0, we have the parent deck. Get children as
