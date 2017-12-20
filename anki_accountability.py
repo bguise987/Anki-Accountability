@@ -17,6 +17,9 @@ from aqt.utils import getText
 
 from anki.hooks import wrap
 
+# import the Scheduler so we can tell when cards are due in future
+from anki.sched import Scheduler
+
 # imports for methods that we wrap
 from anki import stats
 from anki import sched
@@ -199,6 +202,10 @@ def myTodayStats(self, _old):
     con = sqlite.connect(DATABASE_NAME)
     cur = con.cursor()
 
+    # Running this guarantees that we have a valid database to query and
+    # prevents crashes
+    createStudyTable(cur)
+
     # Get the current date
     now = dt.datetime.now()
 
@@ -212,18 +219,27 @@ def myTodayStats(self, _old):
     # If parent deck, cycle through children to get total card count
     # and child deck names
     if (len(parents) == 0):
-        # This list of tuples will help us make the stats image below
-        childInfo = []
+
         children = mw.col.decks.children(deckId)
-        cardCount = 0
-        for child, childDeckId in children:
-            childCardCount = mw.col.db.scalar("select count() from cards where did \
-                                            is %s" % childDeckId)
-            cardCount = cardCount + childCardCount
-            childDeckName = mw.col.decks.name(childDeckId).split("::")[1]
-            childInfo.append((childDeckName, childCardCount))
-        # This helps the display order look...orderly
-        childInfo.sort()
+
+        if (len(children) > 0):
+
+            # This list of tuples will help us make the stats image below
+            childInfo = []
+            cardCount = 0
+            for child, childDeckId in children:
+                childCardCount = mw.col.db.scalar("select count() from cards where did \
+                                                is %s" % childDeckId)
+                cardCount = cardCount + childCardCount
+                childDeckName = mw.col.decks.name(childDeckId).split("::")[1]
+                childInfo.append((childDeckName, childCardCount))
+            # This helps the display order look...orderly
+            childInfo.sort()
+        else:
+            # If this is a parent deck with no children, just look up the count
+            cardCount = mw.col.db.scalar("select count() from cards where did \
+                                     is %s" % deckId)
+
     else:
         # If NOT a parent deck, just ask Anki's DB for the card count
         cardCount = mw.col.db.scalar("select count() from cards where did \
@@ -236,19 +252,21 @@ def myTodayStats(self, _old):
         userEmail = mw.col.conf['email_addr_anki_actbil']
         numDays = int(mw.col.conf['num_days_show_anki_actbil'])
 
+        # First check to see if this is a brand new deck. If it is, let's
+        # notate that in the DB so we can display 'No Data' rather than
+        # 'Incomplete' for previous study days
+        checkIfNewDeck(cur, deckName, cardCount)
+        con.commit()
+
         # Go to the last {{numDays}} days and check if there's a DB entry
+        # If there isn't one for the given day, we'll log it.
         for i in range(1, numDays):
             prevDate = now - timedelta(days=i)
-            prevDate = (str(prevDate.year) + "-" +
-                        str(prevDate.strftime('%m')) + "-" +
-                        str(prevDate.strftime('%d')))
-
-            # Create the study table (if this is not done, Anki will crash)
-            createStudyTable(cur)
 
             # If there is no entry, create one and set to 0
             cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name=? AND\
-                        study_date=?', (deckName, prevDate))
+                        study_date=?',
+                        (deckName, prevDate.strftime(TIMESTAMP_FORMAT_STR)))
             row = cur.fetchone()
 
             # We found a blank study day!
@@ -274,11 +292,15 @@ def myTodayStats(self, _old):
 
         txt += "<div><b>Deck name: " + deckName + "</b></div>"
         # If parent deck, also add in child deck information
-        if (len(parents) == 0):
+        if (len(parents) == 0 and len(children) != 0):
+            txt += "<br>Child decks:<br>"
+            txt += "--------------------------------------"
             for childDeckName, childDeckCount in childInfo:
-                txt += "<div><b>|_&nbsp;" + childDeckName + \
+                txt += "<div><b>&nbsp;" + childDeckName + \
                     "&nbsp;&nbsp;&nbsp;" + str(childDeckCount) + \
                     " Cards</b></div>"
+            txt += "--------------------------------------"
+            txt += "<br>"
         txt += "<div><b>Total cards in deck: </b>" + str(cardCount) + "</div>"
         txt += "<div><b>Studying last " + str(numDays) + " days: </b></div>"
 
@@ -286,12 +308,6 @@ def myTodayStats(self, _old):
         con = sqlite.connect(DATABASE_NAME)
         con.row_factory = sqlite.Row
         cur = con.cursor()
-
-        for i in range(numDays, 1, -1):
-            prevDate = now - timedelta(days=i)
-            prevDate = (str(prevDate.year) + "-" +
-                        str(prevDate.strftime('%m')) + "-" +
-                        str(prevDate.strftime('%d')))
 
         # We run the query within the query so that we can SELECT the data that
         # we want, then sort it so that it appears in chronological order
@@ -304,6 +320,8 @@ def myTodayStats(self, _old):
             studyCompletion = "null"
             if (row is None or row['study_complete'] == 0):
                 studyCompletion = "Incomplete"
+            elif (row['study_complete'] == -1):
+                studyCompletion = "No Data"
             else:
                 studyCompletion = "Complete"
 
@@ -333,12 +351,13 @@ def myFinishedMsg(self):
          Store date in YYYY-MM-DD format so SQL commands can help us eliminate
          old dates """
 
+    # Get the due forecast for the next 7 days (0th day is today)
+    future = Scheduler.dueForecast(self, 7)
+
     studyPercent = 100
 
     # Grab the current date, split out the parts we want
-    now = dt.datetime.now()
-    # Format string used so date conforms to SQLite timestamp format
-    currDate = now.strftime(TIMESTAMP_FORMAT_STR)
+    currDate = dt.datetime.now()
 
     # Get the deck ID - this will let us look up other information
     deckId = mw.col.decks.selected()
@@ -351,6 +370,8 @@ def myFinishedMsg(self):
 
     con = sqlite.connect(DATABASE_NAME)
     cur = con.cursor()
+    # Running this guarantees that we have a valid database to query and
+    # prevents crashes
     createStudyTable(cur)
 
     # If len(parents) is 0, we have the parent deck. Get children as
@@ -381,6 +402,10 @@ def myFinishedMsg(self):
             # Store the current date into the database and 100% complete
             studyPercent = 100
 
+            # Check if this deck has been seen before. If not, log it so that
+            # 'No Data' displays in the stats image
+            checkIfNewDeck(cur, deckName, cardCount)
+
             # Check if we have already made a log of today's session
             # and whether it was 100%
             checkStudyCurrDate(cur, deckName, currDate)
@@ -390,14 +415,15 @@ def myFinishedMsg(self):
             if (row is None):
                 logStudyToDatabase(cur, None, deckName, currDate,
                                    studyPercent, cardCount)
-                con.commit()
+                # lookAheadAndLog(self, cur, deckName, currDate, cardCount)
             else:
                 # Not a blank study day--check if study_complete is 100%
                 if (row[3] != 100):
                     rowId = row[0]
                     logStudyToDatabase(cur, rowId, deckName, currDate,
                                        studyPercent, cardCount)
-                    con.commit()
+                    # lookAheadAndLog(self, cur, deckName, currDate, cardCount)
+            con.commit()
 
         # Log the parent study along with the acculumated card count
         # after checking whether we should be doing an insert or update.
@@ -406,12 +432,25 @@ def myFinishedMsg(self):
         checkStudyCurrDate(cur, parentDeckName, currDate)
         row = cur.fetchone()
 
+        # This is needed to ensure we have correct card count. If a deck has no
+        # children we must get its card count from the database.
+        if (parentCardCount == 0):
+            parentCardCount = mw.col.db.scalar("select count() from cards where\
+                                                did is %s" % deckId)
+        # Check if this deck has been seen before. If not, log it so that
+        # 'No Data' displays in the stats image
+        checkIfNewDeck(cur, parentDeckName, parentCardCount)
+
+        # If there's no row, pass None for rowId to do an INSERT
+        # Otherwise, pass the rowId so that an UPDATE is performed
         if (row is None):
             logStudyToDatabase(cur, None, parentDeckName, currDate,
                                studyPercent, parentCardCount)
+            # lookAheadAndLog(self, cur, deckName, currDate, parentCardCount)
         else:
             logStudyToDatabase(cur, row[0], parentDeckName, currDate,
                                studyPercent, parentCardCount)
+            # lookAheadAndLog(self, cur, deckName, currDate, parentCardCount)
 
         con.commit()
 
@@ -425,6 +464,10 @@ def myFinishedMsg(self):
         deckName = formatDeckNameForDatabase(deckName)
         cardCount = mw.col.db.scalar("select count() from cards where did \
                                             is %s" % deckId)
+
+        # Check if this deck has been seen before. If not, log it so that
+        # 'No Data' displays in the stats image
+        checkIfNewDeck(cur, deckName, cardCount)
 
         # We use a for loop here so that the logic holds for decks that have
         # a parent and a grandparent
@@ -442,14 +485,15 @@ def myFinishedMsg(self):
                 if (row is None):
                     logStudyToDatabase(cur, None, deckName, currDate,
                                        studyPercent, cardCount)
-                    con.commit()
+                    # lookAheadAndLog(self, cur, deckName, currDate, cardCount)
                 else:
                     # Not a blank study day--check if study_complete is 100%
                     if (row[3] != 100):
                         rowId = row[0]
                         logStudyToDatabase(cur, rowId, deckName, currDate,
                                            studyPercent, cardCount)
-                        con.commit()
+                        # lookAheadAndLog(self, cur, deckName, currDate,
+                        #                 cardCount)
             else:
                 # Display a message letting the user know to study the parent
                 # deck or remove the deck and study separately
@@ -462,6 +506,7 @@ def myFinishedMsg(self):
                     "and click 'study now' again."
                 showInfo(studyMsg)
 
+    con.commit()
     # Close the DB connection
     con.close()
 
@@ -554,29 +599,89 @@ except AttributeError:
 
 
 # ****************************************************************************
-# Database handling functions (for maintenance and operations)
+# Functions to handle general operations
 # ****************************************************************************
 
-# TODO: Complete DB handling code
-# Operations code
-def logStudyToDatabase(cur, rowId, deckName, currDate, studyPercent,
+def lookAheadAndLog(self, cur, deckName, currDate, cardCount):
+    """Look ahead number of days user has entered for deck and log any future
+    dates where no cards are due as studied. currDate should be a
+    datetime.datetime object."""
+    # Extract number of days from the collection dictionary
+    numDays = int(mw.col.conf['num_days_show_anki_actbil'])
+    # Find the due forecast for this deck, returned as array of integers
+    future = Scheduler.dueForecast(self, numDays)
+    # Since we're marking future days as studied where apropriate, studyPercent
+    # should be 100
+    studyPercent = 100
+    deckName = formatDeckNameForDatabase(deckName)
+
+    # Iterate through this list, excluding today (first entry)
+    # daysAhead starts at 1 since we construct the loop in such a way as to
+    # skip over the current date anyway
+    daysAhead = 1
+    for x in future[1:]:
+        if (x == 0):
+            # Log the study for this future date
+            futureDate = currDate + timedelta(days=daysAhead)
+
+            # Check if we have already made a log of this day's session
+            # and whether it was 100%
+            checkStudyCurrDate(cur, deckName, futureDate)
+            row = cur.fetchone()
+
+            # We found a blank study day!
+            if (row is None):
+                logStudyToDatabase(cur, None, deckName, futureDate,
+                                   studyPercent, cardCount)
+
+        daysAhead += 1
+
+
+def logStudyToDatabase(cur, rowId, deckName, date, studyPercent,
                        cardCount):
     """Use provided cursor to log a study session. If None is passed for the
     rowid, a new row is created. If an integer is passed, the row will
-    be replaced."""
+    be replaced. date should be passed as a datetime.datetime object."""
+    date = date.strftime(TIMESTAMP_FORMAT_STR)
     cur.execute('INSERT OR REPLACE INTO ' + TABLE_NAME + '(rowid, deck_name,\
                 study_date, study_complete, card_count) VALUES(?, ?, ?, ?, ?)',
-                (rowId, deckName, currDate, studyPercent, cardCount))
+                (rowId, deckName, date, studyPercent, cardCount))
 
 
-def checkStudyCurrDate(cur, deckName, currDate):
+def checkStudyCurrDate(cur, deckName, date):
     """Use provided cursor to check the study database and return rows for
-    the given deck name and date"""
+    the given deck name and date. date should be passed as a datetime.datetime
+    object."""
+    date = date.strftime(TIMESTAMP_FORMAT_STR)
     cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ? \
-            AND study_date = ?', (deckName, currDate))
+            AND study_date = ?', (deckName, date))
 
+
+def checkIfNewDeck(cur, deckName, cardCount):
+    """Use provided cursor to check the study database and see if any rows \
+    exist for the given deckName. If none exist, then it is a new deck and we \
+    should log the previous 15 days as -1 for study_complete to denote that \
+    the deck wasn't there before."""
+    cur.execute('SELECT * FROM ' + TABLE_NAME + ' WHERE deck_name = ?',
+                (deckName,))
+
+    row = cur.fetchone()
+
+    # Check if there is no data at all for this deck
+    if row is None:
+        currDate = dt.datetime.now()
+
+        for i in range(1, 15):
+            prevDate = currDate - timedelta(days=i)
+            logStudyToDatabase(cur, None, deckName, prevDate, -1, cardCount)
+
+# ****************************************************************************
+# Database handling functions (for maintenance and operations)
+# ****************************************************************************
 
 # This will create the 2 study table
+
+
 def createStudyTable(cur):
     """ Create the table (and database) that will store study progress """
     cur.execute('CREATE TABLE IF NOT EXISTS ' + TABLE_NAME + '(ROWID INTEGER \
